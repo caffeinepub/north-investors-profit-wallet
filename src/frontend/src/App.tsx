@@ -59,6 +59,7 @@ import { AccountStatement } from "./components/AccountStatement";
 import { BrokerServicesSection } from "./components/BrokerServicesSection";
 import { CryptoTicker } from "./components/CryptoTicker";
 import { DepositConfirmationModal } from "./components/DepositConfirmationModal";
+import { LiveTicker } from "./components/LiveTicker";
 import { MarketInsightsCard } from "./components/MarketInsightsCard";
 import { PaymentModal } from "./components/PaymentModal";
 import { ReceiveMoneyModal } from "./components/ReceiveMoneyModal";
@@ -67,6 +68,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { SupportChat } from "./components/SupportChat";
 import { useActor } from "./hooks/useActor";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
+import { useLivePrices } from "./hooks/useLivePrices";
 
 // ─── Constants & Fallbacks ───────────────────────────────────────────────────
 
@@ -1831,26 +1833,30 @@ function buildInitialMarkets(btcPrice: number, ethPrice: number): MarketCoin[] {
 function MarketWatchCard({
   btcPrice,
   ethPrice,
+  solPrice,
   isLoading,
 }: {
   btcPrice: number;
   ethPrice: number;
+  solPrice?: number;
   isLoading: boolean;
 }) {
   const [markets, setMarkets] = useState<MarketCoin[]>(() =>
     buildInitialMarkets(btcPrice, ethPrice),
   );
 
-  // Sync BTC/ETH prices when props change
+  // Sync BTC/ETH/SOL prices when props change
   useEffect(() => {
     setMarkets((prev) =>
       prev.map((m) => {
         if (m.symbol === "BTC") return { ...m, price: btcPrice };
         if (m.symbol === "ETH") return { ...m, price: ethPrice };
+        if (m.symbol === "SOL" && solPrice && solPrice > 0)
+          return { ...m, price: solPrice };
         return m;
       }),
     );
-  }, [btcPrice, ethPrice]);
+  }, [btcPrice, ethPrice, solPrice]);
 
   // Live price fluctuations every 10 seconds
   useEffect(() => {
@@ -2413,8 +2419,18 @@ function Dashboard({
     ? Number(stats.communityMembers)
     : FALLBACK_COMMUNITY;
   const btcAddress = stats?.featuredBitcoinAddress ?? FALLBACK_ADDRESS;
-  const btcPrice = prices?.btcPriceUSD ?? FALLBACK_BTC_PRICE;
-  const ethPrice = prices?.ethPriceUSD ?? FALLBACK_ETH_PRICE;
+  const { priceList } = useLivePrices();
+  const liveBTC = priceList.find((c) => c.symbol === "BTC");
+  const liveETH = priceList.find((c) => c.symbol === "ETH");
+  const liveSOL = priceList.find((c) => c.symbol === "SOL");
+  const btcPrice =
+    liveBTC?.live && liveBTC.price > 0
+      ? liveBTC.price
+      : (prices?.btcPriceUSD ?? FALLBACK_BTC_PRICE);
+  const ethPrice =
+    liveETH?.live && liveETH.price > 0
+      ? liveETH.price
+      : (prices?.ethPriceUSD ?? FALLBACK_ETH_PRICE);
   const activityList = activities ?? FALLBACK_ACTIVITIES;
 
   return (
@@ -2431,6 +2447,7 @@ function Dashboard({
         onReceiveMoney={() => setShowReceiveModal(true)}
         onOpenSettings={() => setShowSettings(true)}
       />
+      <LiveTicker />
       <CryptoTicker />
 
       {currentView === "statement" ? (
@@ -2488,6 +2505,7 @@ function Dashboard({
                 <MarketWatchCard
                   btcPrice={btcPrice}
                   ethPrice={ethPrice}
+                  solPrice={liveSOL?.price}
                   isLoading={isLoading || pricesLoading}
                 />
               </div>

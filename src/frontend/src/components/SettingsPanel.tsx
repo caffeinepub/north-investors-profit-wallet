@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Web3 } from "web3";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -713,6 +714,10 @@ function BlockchainSection({
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [exportConfirmed, setExportConfirmed] = useState(false);
   const [exportKeyVisible, setExportKeyVisible] = useState(false);
+  const [generatedEthWallet, setGeneratedEthWallet] = useState<{
+    address: string;
+    privateKey: string;
+  } | null>(null);
 
   const fees = {
     Standard: { display: "~$2.40", time: "~30 min" },
@@ -958,6 +963,83 @@ function BlockchainSection({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Web3.js ETH Wallet Generator */}
+      <div
+        className="mt-3 mb-4 p-3 rounded-lg"
+        style={{
+          background: "rgba(47,107,255,0.08)",
+          border: "1px solid rgba(47,107,255,0.2)",
+        }}
+      >
+        <div
+          className="text-xs font-semibold mb-2"
+          style={{ color: "#F2F5FA" }}
+        >
+          Web3.js ETH Wallet Generator
+        </div>
+        <p className="text-xs mb-3" style={{ color: "#A9B4C6" }}>
+          Generate a new Ethereum wallet address using Web3.js directly in your
+          browser.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            const web3 = new Web3();
+            const account = web3.eth.accounts.create();
+            setGeneratedEthWallet({
+              address: account.address,
+              privateKey: account.privateKey,
+            });
+          }}
+          className="w-full py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, #1E4FD7 0%, #2F6BFF 100%)",
+            color: "#F2F5FA",
+          }}
+          data-ocid="settings.generate_eth_wallet.button"
+        >
+          Generate New ETH Address
+        </button>
+        {generatedEthWallet && (
+          <div className="mt-3 space-y-2">
+            <div
+              className="rounded p-2"
+              style={{
+                background: "rgba(11,18,32,0.7)",
+                border: "1px solid #22324A",
+              }}
+            >
+              <div className="text-xs font-mono" style={{ color: "#A9B4C6" }}>
+                Address:
+              </div>
+              <div
+                className="text-xs font-mono break-all"
+                style={{ color: "#2ECC71" }}
+              >
+                {generatedEthWallet.address}
+              </div>
+            </div>
+            <div
+              className="rounded p-2"
+              style={{
+                background: "rgba(231,76,60,0.1)",
+                border: "1px solid rgba(231,76,60,0.3)",
+              }}
+            >
+              <div className="text-xs font-mono" style={{ color: "#E74C3C" }}>
+                ⚠ Private Key (never share):
+              </div>
+              <div
+                className="text-xs font-mono break-all"
+                style={{ color: "#F2F5FA" }}
+              >
+                {generatedEthWallet.privateKey}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Export Wallet */}
