@@ -1,0 +1,116 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+
+    /* DOW Dark Navy Theme */
+    --background: 0.135 0.025 240;
+    --foreground: 0.963 0.008 240;
+    --card: 0.168 0.035 240;
+    --card-foreground: 0.963 0.008 240;
+    --popover: 0.185 0.04 240;
+    --popover-foreground: 0.963 0.008 240;
+    --primary: 0.76 0.14 85;
+    --primary-foreground: 0.135 0.025 240;
+    --secondary: 0.235 0.04 240;
+    --secondary-foreground: 0.963 0.008 240;
+    --muted: 0.185 0.04 240;
+    --muted-foreground: 0.73 0.025 240;
+    --accent: 0.52 0.22 265;
+    --accent-foreground: 0.963 0.008 240;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.235 0.04 240;
+    --input: 0.235 0.04 240;
+    --ring: 0.76 0.14 85;
+
+    /* Semantic extras */
+    --gold: 0.76 0.14 85;
+    --gold-dim: 0.62 0.11 85;
+    --blue-accent: 0.52 0.22 265;
+    --green-gain: 0.735 0.175 160;
+    --card-alt: 0.185 0.04 240;
+
+    --chart-1: 0.76 0.14 85;
+    --chart-2: 0.52 0.22 265;
+    --chart-3: 0.735 0.175 160;
+    --chart-4: 0.627 0.265 303.9;
+    --chart-5: 0.645 0.246 16.439;
+
+    --sidebar: 0.168 0.035 240;
+    --sidebar-foreground: 0.963 0.008 240;
+    --sidebar-primary: 0.76 0.14 85;
+    --sidebar-primary-foreground: 0.135 0.025 240;
+    --sidebar-accent: 0.235 0.04 240;
+    --sidebar-accent-foreground: 0.963 0.008 240;
+    --sidebar-border: 0.235 0.04 240;
+    --sidebar-ring: 0.76 0.14 85;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-color: #0b1220;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b1220;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #22324a;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #d4af37;
+  }
+}
+
+/* ── Crypto Ticker Scroll Animation ───────────────────────────── */
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.crypto-ticker-bar {
+  position: relative;
+}
+
+.crypto-ticker-scroll {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker-scroll 40s linear infinite;
+  will-change: transform;
+}
+
+.crypto-ticker-bar:hover .crypto-ticker-scroll {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crypto-ticker-scroll {
+    animation: none;
+  }
+}
