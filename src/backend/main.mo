@@ -12,7 +12,6 @@ import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-
 actor {
   // Mixin authorization system, users are authenticated by their principal.
   // Use Role.User for privileged personal data access.

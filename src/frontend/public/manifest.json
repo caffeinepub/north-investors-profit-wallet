@@ -1,0 +1,33 @@
+{
+  "name": "North Investors Profit Wallet",
+  "short_name": "NIPW",
+  "description": "Institutional Bitcoin investment and brokerage platform. Secure, transparent, and high-yield crypto investment.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0B1220",
+  "theme_color": "#D4AF37",
+  "lang": "en",
+  "categories": ["finance", "business"],
+  "screenshots": [
+    {
+      "src": "/assets/generated/nipw-og-image.dim_1200x630.jpg",
+      "type": "image/jpeg",
+      "sizes": "1200x630"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/assets/generated/nipw-og-image.dim_1200x630.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/generated/nipw-og-image.dim_1200x630.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ]
+}

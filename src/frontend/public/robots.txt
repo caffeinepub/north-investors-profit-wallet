@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /_/*
+
+Sitemap: https://northinvestorsprofitwalletcom.icp0.io/sitemap.xml
+
+# North Investors Profit Wallet - NIPW
+# https://northinvestorsprofitwalletcom.icp0.io/

