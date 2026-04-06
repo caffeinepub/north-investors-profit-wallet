@@ -83,7 +83,19 @@ actor {
 
   var nextActivityId = 1;
 
-  let userProfiles = Map.empty<Principal, UserProfile>();
+  // Stable storage for user profiles — persists across canister upgrades/redeployments
+  var userProfileEntries : [(Principal, UserProfile)] = [];
+  let userProfiles = Map.fromIter<Principal, UserProfile>(userProfileEntries.vals());
+
+  // Persist userProfiles to stable storage before upgrade
+  system func preupgrade() {
+    userProfileEntries := userProfiles.entries().toArray();
+  };
+
+  // Clear the temporary entries array after upgrade
+  system func postupgrade() {
+    userProfileEntries := [];
+  };
 
   let activities = List.empty<Activity>();
 
@@ -208,11 +220,9 @@ actor {
       Runtime.trap("Unauthorized: Only users can register profiles");
     };
     if (gmail.size() < 2) {
-      Runtime.trap("Invalid Gmail: too short");
+      Runtime.trap("Invalid email address: too short");
     };
-    if (not gmail.contains(#text("gmail.com"))) {
-      Runtime.trap("Gmail address must contain 'gmail.com', invalid address: " # gmail : Text);
-    };
+    if (displayName.size() < 1) { Runtime.trap("Display name cannot be empty") };
     if (displayName.size() > 50) { Runtime.trap("Display name too long") };
     userProfiles.add(
       caller,

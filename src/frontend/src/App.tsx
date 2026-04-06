@@ -586,10 +586,14 @@ function CreateAccountModal({
       setNameError("");
     }
     if (!gmail.trim()) {
-      setGmailError("Gmail address is required.");
+      setGmailError("Email address is required.");
       valid = false;
-    } else if (!gmail.trim().toLowerCase().endsWith("@gmail.com")) {
-      setGmailError("Address must end in @gmail.com.");
+    } else if (
+      !gmail.trim().includes("@") ||
+      gmail.trim().indexOf("@") === 0 ||
+      gmail.trim().indexOf("@") === gmail.trim().length - 1
+    ) {
+      setGmailError("Please enter a valid email address.");
       valid = false;
     } else {
       setGmailError("");
@@ -676,14 +680,14 @@ function CreateAccountModal({
               className="text-xs font-medium"
               style={{ color: "#A9B4C6" }}
             >
-              Gmail Address
+              Email Address
             </Label>
             <Input
               id="gmail"
               type="email"
               value={gmail}
               onChange={(e) => setGmail(e.target.value)}
-              placeholder="yourname@gmail.com"
+              placeholder="yourname@example.com"
               autoComplete="email"
               disabled={isSubmitting}
               className="text-sm"
@@ -2939,7 +2943,7 @@ export default function App() {
               Complete Your Profile
             </h2>
             <p className="text-sm max-w-sm" style={{ color: "#A9B4C6" }}>
-              You&apos;re almost there! Enter your name and Gmail to set up your{" "}
+              You&apos;re almost there! Enter your name and email to set up your{" "}
               {COMPANY_NAME} account.
             </p>
           </div>

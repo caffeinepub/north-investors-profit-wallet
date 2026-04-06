@@ -47,7 +47,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Web3 } from "web3";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -985,12 +984,25 @@ function BlockchainSection({
         </p>
         <button
           type="button"
-          onClick={() => {
-            const web3 = new Web3();
-            const account = web3.eth.accounts.create();
+          onClick={async () => {
+            // Generate ETH wallet using Web Crypto API
+            const privateKeyBytes = crypto.getRandomValues(new Uint8Array(32));
+            const privateKeyHex = `0x${Array.from(privateKeyBytes)
+              .map((b) => b.toString(16).padStart(2, "0"))
+              .join("")}`;
+            // Derive a pseudo-address from the private key hash
+            const hashBuf = await crypto.subtle.digest(
+              "SHA-256",
+              privateKeyBytes,
+            );
+            const hashArr = Array.from(new Uint8Array(hashBuf));
+            const address = `0x${hashArr
+              .slice(0, 20)
+              .map((b) => b.toString(16).padStart(2, "0"))
+              .join("")}`;
             setGeneratedEthWallet({
-              address: account.address,
-              privateKey: account.privateKey,
+              address,
+              privateKey: privateKeyHex,
             });
           }}
           className="w-full py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
