@@ -14,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Bitcoin, Check, Copy, CreditCard, Lock, QrCode } from "lucide-react";
+import { Bitcoin, Check, Copy, CreditCard, Lock } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -23,6 +23,30 @@ import { toast } from "sonner";
 interface PaymentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+// ─── QR Code Canvas ───────────────────────────────────────────────────────────
+
+function QrCodeCanvas({
+  value,
+  size = 160,
+}: {
+  value: string;
+  size?: number;
+  color?: string;
+}) {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&bgcolor=0B1220&color=D4AF37&margin=2`;
+  return (
+    <div className="flex justify-center py-4">
+      <img
+        src={qrUrl}
+        alt="QR Code"
+        width={size}
+        height={size}
+        style={{ borderRadius: "8px", border: "1px solid rgba(34,50,74,0.8)" }}
+      />
+    </div>
+  );
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -74,23 +98,6 @@ function CopyableAddress({
           <Copy className="w-3.5 h-3.5" style={{ color: "#D4AF37" }} />
         )}
       </button>
-    </div>
-  );
-}
-
-function QrPlaceholder({ label }: { label: string }) {
-  return (
-    <div
-      className="flex flex-col items-center justify-center gap-2 rounded-xl py-8 px-4"
-      style={{
-        border: "2px dashed #22324A",
-        background: "rgba(11,18,32,0.6)",
-      }}
-    >
-      <QrCode className="w-8 h-8" style={{ color: "#22324A" }} />
-      <p className="text-xs text-center" style={{ color: "#A9B4C6" }}>
-        {label}
-      </p>
     </div>
   );
 }
@@ -338,7 +345,7 @@ function BitcoinTab() {
         />
       </div>
 
-      <QrPlaceholder label="Scan to send BTC" />
+      <QrCodeCanvas value={BTC_ADDRESS} color="#D4AF37" />
 
       <div
         className="rounded-xl p-3 flex flex-col gap-1"
@@ -440,7 +447,7 @@ function USDTTab() {
         />
       </div>
 
-      <QrPlaceholder label="Scan to send USDT" />
+      <QrCodeCanvas value={address} color="#22C55E" />
 
       <div
         className="rounded-xl p-3 flex flex-col gap-1"

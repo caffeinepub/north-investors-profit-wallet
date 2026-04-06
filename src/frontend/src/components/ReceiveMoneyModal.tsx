@@ -26,6 +26,30 @@ function generateAccountNumber(name: string) {
   return `NIPW-${((seed * 7919) % 900000) + 100000}`;
 }
 
+// ─── QR Code Canvas ───────────────────────────────────────────────────────────
+
+function QrCodeCanvas({
+  value,
+  size = 160,
+}: {
+  value: string;
+  size?: number;
+  color?: string;
+}) {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&bgcolor=0B1220&color=D4AF37&margin=2`;
+  return (
+    <div className="flex justify-center py-3">
+      <img
+        src={qrUrl}
+        alt="QR Code"
+        width={size}
+        height={size}
+        style={{ borderRadius: "8px", border: "1px solid rgba(34,50,74,0.8)" }}
+      />
+    </div>
+  );
+}
+
 export function ReceiveMoneyModal({
   open,
   onOpenChange,
@@ -204,6 +228,7 @@ export function ReceiveMoneyModal({
               >
                 {BTC_ADDRESS}
               </div>
+              <QrCodeCanvas value={BTC_ADDRESS} color="#D4AF37" />
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -262,6 +287,7 @@ export function ReceiveMoneyModal({
               >
                 {USDT_ADDRESS}
               </div>
+              <QrCodeCanvas value={USDT_ADDRESS} color="#2ECC71" />
               <div className="flex gap-2">
                 <Button
                   size="sm"

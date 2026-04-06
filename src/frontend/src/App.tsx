@@ -63,6 +63,7 @@ import { MarketInsightsCard } from "./components/MarketInsightsCard";
 import { PaymentModal } from "./components/PaymentModal";
 import { ReceiveMoneyModal } from "./components/ReceiveMoneyModal";
 import { SendMoneyModal } from "./components/SendMoneyModal";
+import { SettingsPanel } from "./components/SettingsPanel";
 import { SupportChat } from "./components/SupportChat";
 import { useActor } from "./hooks/useActor";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
@@ -767,6 +768,7 @@ function NavBar({
   onViewStatement,
   onSendMoney,
   onReceiveMoney,
+  onOpenSettings,
 }: {
   displayName: string;
   onLogout: () => void;
@@ -774,6 +776,7 @@ function NavBar({
   onViewStatement: () => void;
   onSendMoney: () => void;
   onReceiveMoney: () => void;
+  onOpenSettings: () => void;
 }) {
   const initials = getInitials(displayName) || "?";
   return (
@@ -807,20 +810,27 @@ function NavBar({
 
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-6">
-          {["Home", "Markets", "Portfolio", "Research", "Settings"].map(
-            (link) => (
-              <a
-                key={link}
-                href="/"
-                className="text-sm font-medium transition-colors hover:text-white flex items-center gap-1"
-                style={{ color: "#A9B4C6" }}
-                data-ocid={`nav.${link.toLowerCase()}.link`}
-              >
-                {link === "Settings" && <Settings className="w-3.5 h-3.5" />}
-                {link}
-              </a>
-            ),
-          )}
+          {["Home", "Markets", "Portfolio", "Research"].map((link) => (
+            <a
+              key={link}
+              href="/"
+              className="text-sm font-medium transition-colors hover:text-white flex items-center gap-1"
+              style={{ color: "#A9B4C6" }}
+              data-ocid={`nav.${link.toLowerCase()}.link`}
+            >
+              {link}
+            </a>
+          ))}
+          <button
+            onClick={onOpenSettings}
+            className="text-sm font-medium transition-colors hover:text-white flex items-center gap-1"
+            style={{ color: "#A9B4C6" }}
+            type="button"
+            data-ocid="nav.settings.link"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            Settings
+          </button>
         </nav>
 
         {/* User pill + logout */}
@@ -898,6 +908,20 @@ function NavBar({
           >
             <Wallet className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Fund Account</span>
+          </button>
+          <button
+            onClick={onOpenSettings}
+            className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 md:hidden"
+            style={{
+              background: "rgba(34,50,74,0.7)",
+              border: "1px solid rgba(212,175,55,0.2)",
+              color: "#D4AF37",
+            }}
+            type="button"
+            data-ocid="nav.settings_mobile.button"
+            aria-label="Open Settings"
+          >
+            <Settings className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onLogout}
@@ -2340,6 +2364,7 @@ function Dashboard({
   const [showSendModal, setShowSendModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [depositConfirmed, setDepositConfirmed] = useState(false);
   const [currentView, setCurrentView] = useState<"dashboard" | "statement">(
     "dashboard",
@@ -2401,6 +2426,7 @@ function Dashboard({
         onViewStatement={() => setCurrentView("statement")}
         onSendMoney={() => setShowSendModal(true)}
         onReceiveMoney={() => setShowReceiveModal(true)}
+        onOpenSettings={() => setShowSettings(true)}
       />
       <CryptoTicker />
 
@@ -2651,6 +2677,12 @@ function Dashboard({
         }}
         displayName={displayName}
         requiredDeposit={120000}
+      />
+      <SettingsPanel
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        displayName={displayName}
+        btcAddress={btcAddress}
       />
     </div>
   );
