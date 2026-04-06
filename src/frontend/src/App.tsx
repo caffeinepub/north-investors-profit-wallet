@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
+  ArrowDownToLine,
   ArrowUpRight,
   BarChart2,
   Bitcoin,
@@ -22,6 +23,7 @@ import {
   Copy,
   DollarSign,
   ExternalLink,
+  FileText,
   Globe,
   Home,
   Linkedin,
@@ -29,6 +31,7 @@ import {
   Lock,
   LogOut,
   Phone,
+  Send,
   Settings,
   Shield,
   TrendingUp,
@@ -48,10 +51,13 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import type { ActivityStatus, Activity as ActivityType } from "./backend.d";
+import { AccountStatement } from "./components/AccountStatement";
 import { BrokerServicesSection } from "./components/BrokerServicesSection";
 import { CryptoTicker } from "./components/CryptoTicker";
 import { MarketInsightsCard } from "./components/MarketInsightsCard";
 import { PaymentModal } from "./components/PaymentModal";
+import { ReceiveMoneyModal } from "./components/ReceiveMoneyModal";
+import { SendMoneyModal } from "./components/SendMoneyModal";
 import { SupportChat } from "./components/SupportChat";
 import { useActor } from "./hooks/useActor";
 import { useInternetIdentity } from "./hooks/useInternetIdentity";
@@ -745,10 +751,16 @@ function NavBar({
   displayName,
   onLogout,
   onFundAccount,
+  onViewStatement,
+  onSendMoney,
+  onReceiveMoney,
 }: {
   displayName: string;
   onLogout: () => void;
   onFundAccount: () => void;
+  onViewStatement: () => void;
+  onSendMoney: () => void;
+  onReceiveMoney: () => void;
 }) {
   const initials = getInitials(displayName) || "?";
   return (
@@ -819,6 +831,48 @@ function NavBar({
             </span>
             <ChevronDown className="w-3.5 h-3.5" style={{ color: "#A9B4C6" }} />
           </div>
+          <button
+            onClick={onSendMoney}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 hidden sm:flex"
+            style={{
+              background: "rgba(34,50,74,0.7)",
+              border: "1px solid rgba(212,175,55,0.25)",
+              color: "#D4AF37",
+            }}
+            type="button"
+            data-ocid="nav.send_money.button"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Send</span>
+          </button>
+          <button
+            onClick={onReceiveMoney}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 hidden sm:flex"
+            style={{
+              background: "rgba(34,50,74,0.7)",
+              border: "1px solid rgba(46,204,113,0.25)",
+              color: "#2ECC71",
+            }}
+            type="button"
+            data-ocid="nav.receive_money.button"
+          >
+            <ArrowDownToLine className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Receive</span>
+          </button>
+          <button
+            onClick={onViewStatement}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 hidden sm:flex"
+            style={{
+              background: "rgba(34,50,74,0.7)",
+              border: "1px solid rgba(212,175,55,0.2)",
+              color: "#A9B4C6",
+            }}
+            type="button"
+            data-ocid="nav.statement.button"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Statement</span>
+          </button>
           <button
             onClick={onFundAccount}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
@@ -2041,6 +2095,11 @@ function Dashboard({
   onLogout: () => void;
 }) {
   const [showPayment, setShowPayment] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [showReceiveModal, setShowReceiveModal] = useState(false);
+  const [currentView, setCurrentView] = useState<"dashboard" | "statement">(
+    "dashboard",
+  );
   const { actor, isFetching: isActorFetching } = useActor();
 
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -2095,203 +2154,232 @@ function Dashboard({
         displayName={displayName}
         onLogout={onLogout}
         onFundAccount={() => setShowPayment(true)}
+        onViewStatement={() => setCurrentView("statement")}
+        onSendMoney={() => setShowSendModal(true)}
+        onReceiveMoney={() => setShowReceiveModal(true)}
       />
       <CryptoTicker />
 
-      <HeroBanner
-        isLoading={isLoading}
-        registeredInvestors={registeredInvestors}
-        communityMembers={communityMembers}
-        displayName={displayName}
-      />
+      {currentView === "statement" ? (
+        <AccountStatement
+          displayName={displayName}
+          btcAddress={btcAddress}
+          totalUSD={totalUSD}
+          totalBTC={totalBTC}
+          onBack={() => setCurrentView("dashboard")}
+        />
+      ) : (
+        <>
+          <HeroBanner
+            isLoading={isLoading}
+            registeredInvestors={registeredInvestors}
+            communityMembers={communityMembers}
+            displayName={displayName}
+          />
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="flex flex-col gap-6">
-            <StrategyBlock />
-            <AccountOverviewCard
-              isLoading={isLoading}
-              totalUSD={totalUSD}
-              totalBTC={totalBTC}
-            />
-          </div>
-
-          {/* Center Column */}
-          <div className="flex flex-col gap-6">
-            <DepositCard
-              address={btcAddress}
-              isLoading={isLoading || pricesLoading}
-            />
-            <PortfolioPerformanceCard />
-          </div>
-
-          {/* Right Column */}
-          <div className="flex flex-col gap-6">
-            <RecentActivityCard
-              activities={activityList}
-              isLoading={activitiesLoading || isActorFetching}
-            />
-            <MarketWatchCard
-              btcPrice={btcPrice}
-              ethPrice={ethPrice}
-              isLoading={isLoading || pricesLoading}
-            />
-          </div>
-        </div>
-
-        {/* Withdrawal Policy */}
-        <WithdrawalPolicyCard address={btcAddress} />
-
-        {/* Platform Overview ticker */}
-        <div
-          className="mt-8 rounded-xl p-4 flex flex-wrap items-center gap-6"
-          style={{
-            background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-            border: "1px solid #22324A",
-          }}
-        >
-          <div className="flex items-center gap-2">
-            <Home className="w-4 h-4" style={{ color: "#D4AF37" }} />
-            <span
-              className="text-xs font-mono uppercase tracking-widest"
-              style={{ color: "#A9B4C6" }}
-            >
-              Platform Overview
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-6">
-            {[
-              { label: "Total AUM", value: fmtUSD(totalUSD), color: "#D4AF37" },
-              {
-                label: "BTC Holdings",
-                value: `₿ ${totalBTC.toFixed(4)}`,
-                color: "#F2F5FA",
-              },
-              {
-                label: "BTC Price",
-                value: fmtUSD(btcPrice),
-                color: "#2ECC71",
-              },
-              {
-                label: "ETH Price",
-                value: fmtUSD(ethPrice),
-                color: "#2F6BFF",
-              },
-              {
-                label: "Total Investors",
-                value: fmtNum(registeredInvestors),
-                color: "#D4AF37",
-              },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-2">
-                <span className="text-xs" style={{ color: "#8A95A8" }}>
-                  {item.label}:
-                </span>
-                <span
-                  className="text-xs font-semibold font-mono"
-                  style={{ color: item.color }}
-                >
-                  {item.value}
-                </span>
+          <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column */}
+              <div className="flex flex-col gap-6">
+                <StrategyBlock />
+                <AccountOverviewCard
+                  isLoading={isLoading}
+                  totalUSD={totalUSD}
+                  totalBTC={totalBTC}
+                />
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Brokerage Services */}
-        <BrokerServicesSection />
+              {/* Center Column */}
+              <div className="flex flex-col gap-6">
+                <DepositCard
+                  address={btcAddress}
+                  isLoading={isLoading || pricesLoading}
+                />
+                <PortfolioPerformanceCard />
+              </div>
 
-        {/* Market Insights + Extended context */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <MarketInsightsCard />
-          <div
-            className="rounded-xl p-5 flex flex-col gap-4"
-            style={{
-              background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-              border: "1px solid rgba(212,175,55,0.2)",
-              boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-            }}
-            data-ocid="broker.info.card"
-          >
-            <div className="flex items-center gap-2">
-              <div
-                className="w-1 h-5 rounded-full"
-                style={{ background: "#D4AF37" }}
-              />
-              <span
-                className="text-sm font-bold font-display"
-                style={{ color: "#D4AF37" }}
-              >
-                Why Choose NIPW as Your Broker?
-              </span>
+              {/* Right Column */}
+              <div className="flex flex-col gap-6">
+                <RecentActivityCard
+                  activities={activityList}
+                  isLoading={activitiesLoading || isActorFetching}
+                />
+                <MarketWatchCard
+                  btcPrice={btcPrice}
+                  ethPrice={ethPrice}
+                  isLoading={isLoading || pricesLoading}
+                />
+              </div>
             </div>
-            {[
-              {
-                title: "Regulated & Compliant",
-                desc: "Fully licensed cryptocurrency broker operating under international financial compliance standards since 2024.",
-                icon: "🛡️",
-              },
-              {
-                title: "Best Execution Policy",
-                desc: "Smart order routing ensures you always get the best available price across 15+ liquidity providers.",
-                icon: "⚡",
-              },
-              {
-                title: "24/7 Expert Support",
-                desc: "Dedicated account managers and our AI-powered support bot are available around the clock. Call us: 1 (274) 201-5975",
-                icon: "💬",
-              },
-              {
-                title: "Zero Hidden Fees",
-                desc: "Transparent fee structure — no surprises. Competitive spreads and clear commission tiers.",
-                icon: "✅",
-              },
-            ].map((item) => (
-              <div key={item.title} className="flex items-start gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-                  style={{
-                    background: "rgba(212,175,55,0.1)",
-                    border: "1px solid rgba(212,175,55,0.2)",
-                  }}
-                >
-                  {item.icon}
-                </div>
-                <div>
-                  <div
-                    className="text-xs font-bold mb-0.5"
-                    style={{ color: "#F2F5FA" }}
-                  >
-                    {item.title}
-                  </div>
-                  <div
-                    className="text-xs leading-relaxed"
-                    style={{ color: "#A9B4C6" }}
-                  >
-                    {item.desc}
-                  </div>
-                </div>
-              </div>
-            ))}
+
+            {/* Withdrawal Policy */}
+            <WithdrawalPolicyCard address={btcAddress} />
+
+            {/* Platform Overview ticker */}
             <div
-              className="mt-2 rounded-lg p-3 text-center"
+              className="mt-8 rounded-xl p-4 flex flex-wrap items-center gap-6"
               style={{
-                background: "rgba(212,175,55,0.06)",
-                border: "1px solid rgba(212,175,55,0.15)",
+                background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
+                border: "1px solid #22324A",
               }}
             >
-              <span className="text-xs font-mono" style={{ color: "#8A95A8" }}>
-                North Investors Profit Wallet — Established{" "}
-                <span style={{ color: "#D4AF37" }}>2024</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <Home className="w-4 h-4" style={{ color: "#D4AF37" }} />
+                <span
+                  className="text-xs font-mono uppercase tracking-widest"
+                  style={{ color: "#A9B4C6" }}
+                >
+                  Platform Overview
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-6">
+                {[
+                  {
+                    label: "Total AUM",
+                    value: fmtUSD(totalUSD),
+                    color: "#D4AF37",
+                  },
+                  {
+                    label: "BTC Holdings",
+                    value: `₿ ${totalBTC.toFixed(4)}`,
+                    color: "#F2F5FA",
+                  },
+                  {
+                    label: "BTC Price",
+                    value: fmtUSD(btcPrice),
+                    color: "#2ECC71",
+                  },
+                  {
+                    label: "ETH Price",
+                    value: fmtUSD(ethPrice),
+                    color: "#2F6BFF",
+                  },
+                  {
+                    label: "Total Investors",
+                    value: fmtNum(registeredInvestors),
+                    color: "#D4AF37",
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: "#8A95A8" }}>
+                      {item.label}:
+                    </span>
+                    <span
+                      className="text-xs font-semibold font-mono"
+                      style={{ color: item.color }}
+                    >
+                      {item.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      </main>
 
-      <Footer />
+            {/* Brokerage Services */}
+            <BrokerServicesSection />
+
+            {/* Market Insights + Extended context */}
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <MarketInsightsCard />
+              <div
+                className="rounded-xl p-5 flex flex-col gap-4"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
+                  border: "1px solid rgba(212,175,55,0.2)",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                }}
+                data-ocid="broker.info.card"
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-1 h-5 rounded-full"
+                    style={{ background: "#D4AF37" }}
+                  />
+                  <span
+                    className="text-sm font-bold font-display"
+                    style={{ color: "#D4AF37" }}
+                  >
+                    Why Choose NIPW as Your Broker?
+                  </span>
+                </div>
+                {[
+                  {
+                    title: "Regulated & Compliant",
+                    desc: "Fully licensed cryptocurrency broker operating under international financial compliance standards since 2024.",
+                    icon: "🛡️",
+                  },
+                  {
+                    title: "Best Execution Policy",
+                    desc: "Smart order routing ensures you always get the best available price across 15+ liquidity providers.",
+                    icon: "⚡",
+                  },
+                  {
+                    title: "24/7 Expert Support",
+                    desc: "Dedicated account managers and our AI-powered support bot are available around the clock. Call us: 1 (274) 201-5975",
+                    icon: "💬",
+                  },
+                  {
+                    title: "Zero Hidden Fees",
+                    desc: "Transparent fee structure — no surprises. Competitive spreads and clear commission tiers.",
+                    icon: "✅",
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="flex items-start gap-3">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                      style={{
+                        background: "rgba(212,175,55,0.1)",
+                        border: "1px solid rgba(212,175,55,0.2)",
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <div>
+                      <div
+                        className="text-xs font-bold mb-0.5"
+                        style={{ color: "#F2F5FA" }}
+                      >
+                        {item.title}
+                      </div>
+                      <div
+                        className="text-xs leading-relaxed"
+                        style={{ color: "#A9B4C6" }}
+                      >
+                        {item.desc}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div
+                  className="mt-2 rounded-lg p-3 text-center"
+                  style={{
+                    background: "rgba(212,175,55,0.06)",
+                    border: "1px solid rgba(212,175,55,0.15)",
+                  }}
+                >
+                  <span
+                    className="text-xs font-mono"
+                    style={{ color: "#8A95A8" }}
+                  >
+                    North Investors Profit Wallet — Established{" "}
+                    <span style={{ color: "#D4AF37" }}>2024</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <Footer />
+        </>
+      )}
       <PaymentModal open={showPayment} onOpenChange={setShowPayment} />
+      <SendMoneyModal open={showSendModal} onOpenChange={setShowSendModal} />
+      <ReceiveMoneyModal
+        open={showReceiveModal}
+        onOpenChange={setShowReceiveModal}
+        displayName={displayName}
+      />
     </div>
   );
 }
