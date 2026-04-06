@@ -2355,9 +2355,11 @@ function Footer() {
 
 function Dashboard({
   displayName,
+  gmail,
   onLogout,
 }: {
   displayName: string;
+  gmail: string;
   onLogout: () => void;
 }) {
   const [showPayment, setShowPayment] = useState(false);
@@ -2365,6 +2367,7 @@ function Dashboard({
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [triggerSupportChat, setTriggerSupportChat] = useState(false);
   const [depositConfirmed, setDepositConfirmed] = useState(false);
   const [currentView, setCurrentView] = useState<"dashboard" | "statement">(
     "dashboard",
@@ -2682,7 +2685,13 @@ function Dashboard({
         open={showSettings}
         onOpenChange={setShowSettings}
         displayName={displayName}
+        gmail={gmail}
         btcAddress={btcAddress}
+        onOpenSupportChat={() => setTriggerSupportChat(true)}
+      />
+      <SupportChat
+        triggerOpen={triggerSupportChat}
+        onTriggered={() => setTriggerSupportChat(false)}
       />
     </div>
   );
@@ -2700,6 +2709,7 @@ export default function App() {
 
   // Profile state
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [userGmail, setUserGmail] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
 
@@ -2718,6 +2728,7 @@ export default function App() {
         if (cancelled) return;
         if (profile?.displayName) {
           setDisplayName(profile.displayName);
+          setUserGmail(profile.gmail ?? null);
         } else {
           // No profile yet — prompt to create one
           setShowCreateAccount(true);
@@ -2739,6 +2750,7 @@ export default function App() {
   const handleLogout = useCallback(() => {
     clear();
     setDisplayName(null);
+    setUserGmail(null);
     setProfileLoaded(false);
     setProfileLoading(false);
     setShowCreateAccount(false);
@@ -2752,6 +2764,7 @@ export default function App() {
       try {
         await actor.registerUserProfile(name, gmail);
         setDisplayName(name);
+        setUserGmail(gmail);
         setProfileLoaded(true);
         setShowCreateAccount(false);
         toast.success(`Welcome to ${COMPANY_NAME}, ${name}!`, {
@@ -2945,9 +2958,9 @@ export default function App() {
       />
       <Dashboard
         displayName={displayName ?? "Investor"}
+        gmail={userGmail ?? ""}
         onLogout={handleLogout}
       />
-      <SupportChat />
     </>
   );
 }

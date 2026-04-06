@@ -99,7 +99,10 @@ function UserBubble({ text }: { text: string }) {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export function SupportChat() {
+export function SupportChat({
+  triggerOpen,
+  onTriggered,
+}: { triggerOpen?: boolean; onTriggered?: () => void } = {}) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [step, setStep] = useState<ChatStep>("greeting");
@@ -107,6 +110,15 @@ export function SupportChat() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Open chat when triggered externally (e.g. from Settings Contact Support)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional trigger pattern
+  useEffect(() => {
+    if (triggerOpen) {
+      setOpen(true);
+      onTriggered?.();
+    }
+  }, [triggerOpen]);
 
   // Send initial greeting when chat opens for first time
   useEffect(() => {
