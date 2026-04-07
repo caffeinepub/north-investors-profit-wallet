@@ -67,26 +67,15 @@ import { ReceiveMoneyModal } from "./components/ReceiveMoneyModal";
 import { SendMoneyModal } from "./components/SendMoneyModal";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { SupportChat } from "./components/SupportChat";
+import type { TransactionDetail } from "./components/TransactionDetailModal";
+import { TransactionDetailModal } from "./components/TransactionDetailModal";
+import { TransactionHistoryModal } from "./components/TransactionHistoryModal";
 import { useLivePrices } from "./hooks/useLivePrices";
 
 // ─── Local Types ─────────────────────────────────────────────────────────────
 
-type ActivityStatus = "completed" | "pending" | "failed";
-
-interface ActivityType {
-  id: string;
-  activityType:
-    | "deposit"
-    | "withdrawal"
-    | "interestPayment"
-    | "referralBonus"
-    | "transfer";
-  amount: number;
-  currency: string;
-  description: string;
-  timestamp: number;
-  status: ActivityStatus;
-}
+// ActivityType is an alias for TransactionDetail to enable full detail support
+type ActivityType = TransactionDetail;
 
 // ─── Constants & Fallbacks ───────────────────────────────────────────────────
 
@@ -138,57 +127,171 @@ const CHART_DATA = generateChartData();
 const FALLBACK_ACTIVITIES: ActivityType[] = [
   {
     id: "1",
-    activityType: "deposit" as ActivityType["activityType"],
-    description: "Bitcoin Deposit — Institutional Account (Christiana)",
-    amount: 48750.0,
-    currency: "USD",
-    status: "completed" as ActivityStatus,
-    timestamp: Date.now() - 1000 * 60 * 32,
+    activityType: "deposit",
+    description: "Initial Institutional Deposit — Christiana Portfolio",
+    amount: 2100000.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 540,
+    btcAmount: "33.8920 BTC",
+    referenceId: "TXN-2024-001",
+    fromAccount: "Institutional Wire Transfer",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
   },
   {
     id: "2",
-    activityType: "interestPayment" as ActivityType["activityType"],
-    description: "Monthly Interest Payment — Q2 2025 Yield (Christiana)",
-    amount: 14567.8,
-    currency: "USD",
-    status: "completed" as ActivityStatus,
-    timestamp: Date.now() - 1000 * 60 * 60 * 6,
+    activityType: "deposit",
+    description: "BTC Acquisition — 7.2140 BTC @ $61,350",
+    amount: 442741.4,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 470,
+    btcAmount: "7.2140 BTC",
+    referenceId: "TXN-2024-002",
+    fromAccount: "OTC Desk — NIPW Institutional",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef12345678",
   },
   {
     id: "3",
-    activityType: "deposit" as ActivityType["activityType"],
-    description: "BTC Acquisition — 0.7820 BTC @ $62,850",
-    amount: 49147.7,
-    currency: "USD",
-    status: "completed" as ActivityStatus,
-    timestamp: Date.now() - 1000 * 60 * 60 * 24,
+    activityType: "deposit",
+    description: "BTC Acquisition — 5.8210 BTC @ $63,720",
+    amount: 370991.52,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 400,
+    btcAmount: "5.8210 BTC",
+    referenceId: "TXN-2024-003",
+    fromAccount: "OTC Desk — NIPW Institutional",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890",
   },
   {
     id: "4",
-    activityType: "referralBonus" as ActivityType["activityType"],
-    description: "Referral Bonus — Elite Tier Activation",
-    amount: 2500.0,
-    currency: "USD",
-    status: "completed" as ActivityStatus,
-    timestamp: Date.now() - 1000 * 60 * 60 * 48,
+    activityType: "interestPayment",
+    description: "Monthly Interest Payment — Q3 2024 Yield",
+    amount: 42000.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 360,
+    btcAmount: "0.6627 BTC",
+    referenceId: "TXN-2024-004",
+    fromAccount: "NIPW Yield Distribution Engine",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "d4e5f6789012345678901234567890abcdef1234567890abcdef12345678901a",
   },
   {
     id: "5",
-    activityType: "deposit" as ActivityType["activityType"],
-    description: "BTC Acquisition — 1.2500 BTC @ $61,400",
-    amount: 76750.0,
-    currency: "USD",
-    status: "completed" as ActivityStatus,
-    timestamp: Date.now() - 1000 * 60 * 60 * 72,
+    activityType: "deposit",
+    description: "BTC Acquisition — 6.9400 BTC @ $65,100",
+    amount: 451794.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 300,
+    btcAmount: "6.9400 BTC",
+    referenceId: "TXN-2024-005",
+    fromAccount: "OTC Desk — NIPW Institutional",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "e5f6789012345678901234567890abcdef1234567890abcdef12345678901ab2",
   },
   {
     id: "6",
-    activityType: "interestPayment" as ActivityType["activityType"],
+    activityType: "referralBonus",
+    description: "Referral Bonus — Elite Tier Activation",
+    amount: 15000.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 265,
+    btcAmount: "0.2302 BTC",
+    referenceId: "TXN-2024-006",
+    fromAccount: "NIPW Referral Rewards Program",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "f6789012345678901234567890abcdef1234567890abcdef12345678901ab2c3",
+  },
+  {
+    id: "7",
+    activityType: "interestPayment",
+    description: "Monthly Interest Payment — Q4 2024 Yield",
+    amount: 56000.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 220,
+    btcAmount: "0.8842 BTC",
+    referenceId: "TXN-2024-007",
+    fromAccount: "NIPW Yield Distribution Engine",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "789012345678901234567890abcdef1234567890abcdef12345678901ab2c3d4",
+  },
+  {
+    id: "8",
+    activityType: "deposit",
+    description: "BTC Acquisition — 7.6820 BTC @ $68,400",
+    amount: 525448.8,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 170,
+    btcAmount: "7.6820 BTC",
+    referenceId: "TXN-2025-001",
+    fromAccount: "OTC Desk — NIPW Institutional",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "8901234567890abcdef1234567890abcdef12345678901ab2c3d4e5f6789012",
+  },
+  {
+    id: "9",
+    activityType: "interestPayment",
     description: "Portfolio Yield Distribution — Annual Compounding",
-    amount: 18240.5,
-    currency: "USD",
-    status: "completed" as ActivityStatus,
-    timestamp: Date.now() - 1000 * 60 * 60 * 96,
+    amount: 78000.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 120,
+    btcAmount: "1.1931 BTC",
+    referenceId: "TXN-2025-002",
+    fromAccount: "NIPW Yield Distribution Engine",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "901234567890abcdef1234567890abcdef12345678901ab2c3d4e5f678901234",
+  },
+  {
+    id: "10",
+    activityType: "deposit",
+    description: "BTC Acquisition — 5.1200 BTC @ $72,150",
+    amount: 369408.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 72,
+    btcAmount: "5.1200 BTC",
+    referenceId: "TXN-2025-003",
+    fromAccount: "OTC Desk — NIPW Institutional",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "01234567890abcdef1234567890abcdef12345678901ab2c3d4e5f6789012345",
+  },
+  {
+    id: "11",
+    activityType: "interestPayment",
+    description: "Monthly Interest Payment — Q2 2025 Yield",
+    amount: 48750.0,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 30,
+    btcAmount: "0.7682 BTC",
+    referenceId: "TXN-2025-004",
+    fromAccount: "NIPW Yield Distribution Engine",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "1234567890abcdef1234567890abcdef12345678901ab2c3d4e5f67890123456",
+  },
+  {
+    id: "12",
+    activityType: "deposit",
+    description: "BTC Acquisition — 0.7820 BTC @ $62,850",
+    amount: 49147.7,
+    currency: "BTC",
+    status: "completed",
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 3,
+    btcAmount: "0.7820 BTC",
+    referenceId: "TXN-2025-005",
+    fromAccount: "OTC Desk — NIPW Institutional",
+    toAccount: "Christiana — NIPW Portfolio",
+    txHash: "234567890abcdef1234567890abcdef12345678901ab2c3d4e5f6789012345678",
   },
 ];
 
@@ -275,6 +378,403 @@ function NIPWCrest({ size = 40 }: { size?: number }) {
       }}
     >
       ₦
+    </div>
+  );
+}
+
+// ─── Investor Key Gate ────────────────────────────────────────────────────────
+
+const INVESTOR_KEY = "NWAU6984C";
+const KEY_OPTIONS = [
+  { label: "A", value: "NWAU1234X" },
+  { label: "B", value: "NWAU7721B" },
+  { label: "C", value: "NIPW8800K" },
+  { label: "D", value: "NWAU0000Z" },
+];
+
+function InvestorKeyGate({ onVerified }: { onVerified: () => void }) {
+  const [inputVal, setInputVal] = useState("");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "success" | "error" | "locked">(
+    "idle",
+  );
+  const [attempts, setAttempts] = useState(0);
+  const [lockCountdown, setLockCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  function startLockTimer() {
+    setLockCountdown(30);
+    timerRef.current = setInterval(() => {
+      setLockCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          setStatus("idle");
+          setAttempts(0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  function handleOptionSelect(val: string) {
+    setSelected(val);
+    setInputVal(val);
+    setStatus("idle");
+  }
+
+  function handleVerify() {
+    if (status === "locked") return;
+    const key = inputVal.trim().toUpperCase();
+    if (key === INVESTOR_KEY) {
+      setStatus("success");
+      localStorage.setItem("nipw-investor-key", "verified");
+      setTimeout(() => onVerified(), 1600);
+    } else {
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      if (newAttempts >= 3) {
+        setStatus("locked");
+        startLockTimer();
+      } else {
+        setStatus("error");
+      }
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{
+        background:
+          "linear-gradient(135deg, #050e1a 0%, #0a1628 50%, #050e1a 100%)",
+      }}
+      data-ocid="investor-key-gate"
+    >
+      {/* Subtle radial glow behind card */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(240,185,11,0.06) 0%, transparent 70%)",
+        }}
+      />
+
+      <div
+        className="relative w-full max-w-md rounded-2xl overflow-hidden"
+        style={{
+          background: "linear-gradient(160deg, #0d1f38 0%, #081526 100%)",
+          border: "1px solid rgba(240,185,11,0.35)",
+          boxShadow:
+            "0 0 60px rgba(240,185,11,0.12), 0 32px 64px rgba(0,0,0,0.6), inset 0 1px 0 rgba(240,185,11,0.15)",
+        }}
+      >
+        {/* Top gold accent bar */}
+        <div
+          className="h-1 w-full"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, #F0B90B 30%, #FFD700 50%, #F0B90B 70%, transparent)",
+          }}
+        />
+
+        <div className="px-8 py-8">
+          {/* Header */}
+          <div className="flex flex-col items-center text-center mb-8">
+            {/* Shield icon with gold glow */}
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(240,185,11,0.15) 0%, rgba(240,185,11,0.05) 100%)",
+                border: "1.5px solid rgba(240,185,11,0.5)",
+                boxShadow: "0 0 24px rgba(240,185,11,0.2)",
+              }}
+            >
+              <Shield className="w-8 h-8" style={{ color: "#F0B90B" }} />
+            </div>
+
+            {/* NIPW wordmark */}
+            <div className="flex items-center gap-2 mb-3">
+              <NIPWCrest size={28} />
+              <div>
+                <div
+                  className="font-display font-bold text-xs tracking-widest leading-tight"
+                  style={{ color: "#F0B90B" }}
+                >
+                  NORTH INVESTORS PROFIT WALLET
+                </div>
+                <div
+                  className="text-xs font-mono tracking-wider"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                >
+                  (NIPW) — EST. 2024
+                </div>
+              </div>
+            </div>
+
+            <h1
+              className="text-xl font-display font-bold mb-2 tracking-wide"
+              style={{ color: "#ffffff" }}
+            >
+              Investor Key Required
+            </h1>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.55)" }}
+            >
+              Access to North Investors Profit Wallet is restricted to verified
+              investors. Please enter your{" "}
+              <span style={{ color: "#F0B90B" }}>Investor Key</span> to proceed.
+            </p>
+          </div>
+
+          {/* Success state */}
+          {status === "success" && (
+            <div
+              className="flex flex-col items-center gap-3 py-6 rounded-xl"
+              style={{
+                background: "rgba(46,204,113,0.08)",
+                border: "1px solid rgba(46,204,113,0.3)",
+              }}
+            >
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{
+                  background: "rgba(46,204,113,0.15)",
+                  border: "2px solid #2ECC71",
+                }}
+              >
+                <CheckCircle2
+                  className="w-6 h-6"
+                  style={{ color: "#2ECC71" }}
+                />
+              </div>
+              <div
+                className="font-semibold text-sm tracking-wide"
+                style={{ color: "#2ECC71" }}
+              >
+                Correct Investor Key — Access Granted
+              </div>
+              <div
+                className="text-xs"
+                style={{ color: "rgba(255,255,255,0.4)" }}
+              >
+                Redirecting to platform…
+              </div>
+            </div>
+          )}
+
+          {/* Input form */}
+          {status !== "success" && (
+            <>
+              {/* Multiple choice options */}
+              <div className="mb-5">
+                <div
+                  className="text-xs font-semibold tracking-widest mb-3 uppercase"
+                  style={{ color: "rgba(255,255,255,0.4)" }}
+                >
+                  Select or type your investor key
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {KEY_OPTIONS.map((opt) => {
+                    const isSelected = selected === opt.value;
+                    return (
+                      <button
+                        key={opt.label}
+                        type="button"
+                        onClick={() => handleOptionSelect(opt.value)}
+                        className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-all duration-150"
+                        style={{
+                          background: isSelected
+                            ? "rgba(240,185,11,0.12)"
+                            : "rgba(255,255,255,0.04)",
+                          border: isSelected
+                            ? "1.5px solid rgba(240,185,11,0.6)"
+                            : "1.5px solid rgba(255,255,255,0.1)",
+                          boxShadow: isSelected
+                            ? "0 0 12px rgba(240,185,11,0.1)"
+                            : "none",
+                        }}
+                        data-ocid={`key-option-${opt.label.toLowerCase()}`}
+                      >
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{
+                            background: isSelected
+                              ? "#F0B90B"
+                              : "rgba(255,255,255,0.08)",
+                            color: isSelected
+                              ? "#050e1a"
+                              : "rgba(255,255,255,0.5)",
+                          }}
+                        >
+                          {opt.label}
+                        </div>
+                        <span
+                          className="font-mono text-xs tracking-wider font-medium"
+                          style={{
+                            color: isSelected
+                              ? "#F0B90B"
+                              : "rgba(255,255,255,0.65)",
+                          }}
+                        >
+                          {opt.value}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Text input */}
+              <div className="mb-4">
+                <Label
+                  htmlFor="investor-key-input"
+                  className="text-xs font-semibold tracking-widest uppercase mb-1.5 block"
+                  style={{ color: "rgba(255,255,255,0.5)" }}
+                >
+                  Enter Investor Key
+                </Label>
+                <Input
+                  id="investor-key-input"
+                  value={inputVal}
+                  onChange={(e) => {
+                    setInputVal(e.target.value.toUpperCase());
+                    setSelected(null);
+                    if (status === "error") setStatus("idle");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleVerify();
+                  }}
+                  placeholder="Enter your investor key"
+                  disabled={status === "locked"}
+                  className="font-mono tracking-widest text-sm h-11"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border:
+                      status === "error"
+                        ? "1.5px solid rgba(231,76,60,0.6)"
+                        : "1.5px solid rgba(255,255,255,0.15)",
+                    color: "#ffffff",
+                  }}
+                  data-ocid="investor-key-input"
+                />
+              </div>
+
+              {/* Error message */}
+              {status === "error" && (
+                <div
+                  className="flex items-center gap-2 text-sm mb-4 px-3 py-2 rounded-lg"
+                  style={{
+                    background: "rgba(231,76,60,0.1)",
+                    border: "1px solid rgba(231,76,60,0.3)",
+                    color: "#e74c3c",
+                  }}
+                >
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  <span>Incorrect Investor Key. Please try again.</span>
+                </div>
+              )}
+
+              {/* Locked message */}
+              {status === "locked" && (
+                <div
+                  className="flex items-start gap-2 text-sm mb-4 px-3 py-3 rounded-lg"
+                  style={{
+                    background: "rgba(231,76,60,0.1)",
+                    border: "1px solid rgba(231,76,60,0.3)",
+                    color: "#e74c3c",
+                  }}
+                >
+                  <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold mb-0.5">
+                      Too many failed attempts
+                    </div>
+                    <div
+                      className="text-xs"
+                      style={{ color: "rgba(231,76,60,0.8)" }}
+                    >
+                      Please contact support at{" "}
+                      <span className="font-mono">1 (274) 201-5975</span>. Form
+                      unlocks in{" "}
+                      <span className="font-semibold">{lockCountdown}s</span>.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Submit button */}
+              <button
+                type="button"
+                onClick={handleVerify}
+                disabled={status === "locked" || !inputVal.trim()}
+                className="w-full h-11 rounded-lg font-display font-bold text-sm tracking-widest uppercase transition-all duration-200 flex items-center justify-center gap-2"
+                style={{
+                  background:
+                    status === "locked" || !inputVal.trim()
+                      ? "rgba(240,185,11,0.25)"
+                      : "linear-gradient(135deg, #F0B90B 0%, #FFD700 50%, #F0B90B 100%)",
+                  color:
+                    status === "locked" || !inputVal.trim()
+                      ? "rgba(255,255,255,0.3)"
+                      : "#050e1a",
+                  cursor:
+                    status === "locked" || !inputVal.trim()
+                      ? "not-allowed"
+                      : "pointer",
+                  boxShadow:
+                    status === "locked" || !inputVal.trim()
+                      ? "none"
+                      : "0 4px 24px rgba(240,185,11,0.3)",
+                }}
+                data-ocid="verify-key-button"
+              >
+                <Shield className="w-4 h-4" />
+                Verify Key
+              </button>
+
+              {/* Bottom hint */}
+              <p
+                className="text-center text-xs mt-4"
+                style={{ color: "rgba(255,255,255,0.3)" }}
+              >
+                This platform is restricted to verified investors only.
+                <br />
+                Your investor key was provided at account enrollment.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Bottom gold accent bar */}
+        <div
+          className="h-px w-full"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(240,185,11,0.3) 50%, transparent)",
+          }}
+        />
+        <div
+          className="px-8 py-3 flex items-center justify-center gap-1"
+          style={{ background: "rgba(0,0,0,0.2)" }}
+        >
+          <Lock
+            className="w-3 h-3"
+            style={{ color: "rgba(255,255,255,0.25)" }}
+          />
+          <span className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>
+            Secured by North Investors Profit Wallet — 256-bit encrypted
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2105,9 +2605,13 @@ function PortfolioPerformanceCard() {
 function RecentActivityCard({
   activities,
   isLoading,
+  onViewAll,
+  onSelectActivity,
 }: {
   activities: ActivityType[];
   isLoading: boolean;
+  onViewAll: () => void;
+  onSelectActivity: (act: ActivityType) => void;
 }) {
   return (
     <div
@@ -2129,14 +2633,15 @@ function RecentActivityCard({
             Recent Activity
           </span>
         </div>
-        <a
-          href="/"
+        <button
+          type="button"
+          onClick={onViewAll}
           className="text-xs flex items-center gap-1 hover:text-white transition-colors"
           style={{ color: "var(--nipw-text-secondary)" }}
           data-ocid="activity.view_all.link"
         >
           View all <ExternalLink className="w-3 h-3" />
-        </a>
+        </button>
       </div>
 
       {isLoading ? (
@@ -2148,25 +2653,27 @@ function RecentActivityCard({
       ) : (
         <div className="space-y-2">
           {activities.slice(0, 5).map((act, idx) => (
-            <div
+            <button
+              type="button"
               key={act.id.toString()}
-              className="flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-opacity-80"
+              onClick={() => onSelectActivity(act)}
+              className="w-full flex items-center justify-between p-3 rounded-lg transition-all hover:brightness-110 cursor-pointer text-left"
               style={{
                 background: "var(--nipw-row-bg)",
                 border: "1px solid rgba(34,50,74,0.6)",
               }}
               data-ocid={`activity.item.${idx + 1}`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{ background: "rgba(34,50,74,0.8)" }}
                 >
                   {activityIcon(act.activityType)}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div
-                    className="text-xs font-medium min-w-0 flex-1 truncate"
+                    className="text-xs font-medium truncate"
                     style={{ color: "var(--nipw-text-primary)" }}
                   >
                     {act.description}
@@ -2179,10 +2686,10 @@ function RecentActivityCard({
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+              <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
                 <div
                   className="text-xs font-semibold font-mono"
-                  style={{ color: "var(--nipw-text-primary)" }}
+                  style={{ color: "var(--nipw-gold)" }}
                 >
                   +{fmtUSD(act.amount)}
                 </div>
@@ -2204,7 +2711,7 @@ function RecentActivityCard({
                     String(act.status).slice(1)}
                 </Badge>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -3032,6 +3539,11 @@ function Dashboard({
   const [currentView, setCurrentView] = useState<"dashboard" | "statement">(
     "dashboard",
   );
+  const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(
+    null,
+  );
+  const [showTxDetail, setShowTxDetail] = useState(false);
+  const [showTxHistory, setShowTxHistory] = useState(false);
   const { actor: rawActor, isFetching: isActorFetching } =
     useActor(createActor);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -3175,6 +3687,11 @@ function Dashboard({
                 <RecentActivityCard
                   activities={activityList}
                   isLoading={activitiesLoading || isActorFetching}
+                  onViewAll={() => setShowTxHistory(true)}
+                  onSelectActivity={(act) => {
+                    setSelectedActivity(act);
+                    setShowTxDetail(true);
+                  }}
                 />
                 <MarketWatchCard
                   btcPrice={btcPrice}
@@ -3393,6 +3910,17 @@ function Dashboard({
         triggerOpen={triggerSupportChat}
         onTriggered={() => setTriggerSupportChat(false)}
       />
+      <TransactionDetailModal
+        transaction={selectedActivity}
+        open={showTxDetail}
+        onOpenChange={setShowTxDetail}
+      />
+      <TransactionHistoryModal
+        open={showTxHistory}
+        onOpenChange={setShowTxHistory}
+        transactions={activityList}
+        displayName={displayName}
+      />
     </div>
   );
 }
@@ -3464,6 +3992,11 @@ export default function App() {
     useActor(createActor);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const actor = rawActor2 as any;
+
+  // Investor key gate state — persisted in localStorage
+  const [keyVerified, setKeyVerified] = useState<boolean>(
+    () => localStorage.getItem("nipw-investor-key") === "verified",
+  );
 
   // Session state — read from localStorage on mount
   const [session, setSessionState] = useState<{
@@ -3580,6 +4113,16 @@ export default function App() {
   };
 
   // ─── Render states ────────────────────────────────────────────────────────
+
+  // Investor key gate — must pass before anything else
+  if (!keyVerified) {
+    return (
+      <>
+        <Toaster position="top-right" toastOptions={{ style: toasterStyle }} />
+        <InvestorKeyGate onVerified={() => setKeyVerified(true)} />
+      </>
+    );
+  }
 
   // Not authenticated: show landing page
   if (!isAuthenticated) {
