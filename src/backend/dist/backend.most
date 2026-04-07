@@ -1,0 +1,90 @@
+// Version: 3.0.0
+type ActivitiesBlock_Old__217538807 =
+  {
+    var blockIndex : Nat;
+    var blocks : [var [var ?Activity_Old__1066181753]];
+    var elementIndex : Nat
+  };
+type ActivityStatus_Old__975239961 = {#completed; #failed; #pending};
+type ActivityStatus__152715502 = {#completed; #failed; #pending};
+type ActivityType_Old__891640994 =
+  {#deposit; #interestPayment; #referralBonus; #withdrawal};
+type ActivityType__471236646 =
+  {#deposit; #interestPayment; #referralBonus; #withdrawal};
+type Activity_Old__1066181753 =
+  {
+    activityType : ActivityType_Old__891640994;
+    amount : Float;
+    description : Text;
+    id : Nat;
+    status : ActivityStatus_Old__975239961;
+    timestamp : Int
+  };
+type Activity__391177660 =
+  {
+    activityType : ActivityType__471236646;
+    amount : Float;
+    description : Text;
+    id : Nat;
+    status : ActivityStatus__152715502;
+    timestamp : Time__900049286
+  };
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type Int__270357528 = Int__616954475;
+type Int__616954475 = Int;
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type Time__796480547 = Int__270357528;
+type Time__900049286 = Time__796480547;
+type UserProfile_Old__324361415 = {displayName : Text; gmail : Text};
+type UserProfile__491224006 = {displayName : Text; gmail : Text};
+actor ({
+  in activities : ActivitiesBlock_Old__217538807;
+  in var marketPrices :
+    {btcPriceUSD : Float; ethPriceUSD : Float; lastUpdated : Int};
+  in var nextActivityId : Nat;
+  in var platformStats :
+    {
+      communityMembers : Nat;
+      featuredBitcoinAddress : Text;
+      registeredInvestors : Nat;
+      totalBTC : Float;
+      totalUSDBalance : Float
+    };
+  in userProfileEntries : [(Principal, UserProfile_Old__324361415)];
+  stable userProfiles :
+    {
+      var root : Node__46230540<Principal, UserProfile__491224006>;
+      var size : Nat__490723111
+    }
+}, {
+  stable activities :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?Activity__391177660]];
+      var elementIndex : Nat__490723111
+    };
+  stable var marketPrices :
+    {btcPriceUSD : Float; ethPriceUSD : Float; lastUpdated : Time__900049286};
+  stable var nextActivityId : Nat;
+  stable var platformStats :
+    {
+      communityMembers : Nat;
+      featuredBitcoinAddress : Text;
+      registeredInvestors : Nat;
+      totalBTC : Float;
+      totalUSDBalance : Float
+    };
+  stable var userProfileEntries : [(Principal, UserProfile__491224006)];
+  stable userProfiles :
+    {
+      var root : Node__46230540<Principal, UserProfile__491224006>;
+      var size : Nat__490723111
+    }
+}) ;

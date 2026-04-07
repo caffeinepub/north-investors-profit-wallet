@@ -1,22 +1,16 @@
 import Time "mo:core/Time";
-import Iter "mo:core/Iter";
+import Int "mo:core/Int";
 import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
 import Text "mo:core/Text";
 import List "mo:core/List";
 import Map "mo:core/Map";
 import Array "mo:core/Array";
-import Order "mo:core/Order";
 import Runtime "mo:core/Runtime";
+import Migration "migration";
 
-import MixinAuthorization "authorization/MixinAuthorization";
-import AccessControl "authorization/access-control";
-
+(with migration = Migration.run)
 actor {
-  // Mixin authorization system, users are authenticated by their principal.
-  // Use Role.User for privileged personal data access.
-  let accessControlState = AccessControl.initState();
-  include MixinAuthorization(accessControlState);
 
   public type PRincipal = Principal;
 
@@ -42,12 +36,6 @@ actor {
     description : Text;
   };
 
-  module Activity {
-    public func compare(a : Activity, b : Activity) : Order.Order {
-      Int.compare(b.timestamp, a.timestamp);
-    };
-  };
-
   type PlatformStats = {
     totalUSDBalance : Float;
     totalBTC : Float;
@@ -68,7 +56,7 @@ actor {
   };
 
   var platformStats : PlatformStats = {
-    totalUSDBalance = 600_000.0;
+    totalUSDBalance = 6_000_000.0;
     totalBTC = 9.4231;
     registeredInvestors = 4_812;
     communityMembers = 19_789;
@@ -81,59 +69,39 @@ actor {
     lastUpdated = Time.now();
   };
 
-  var nextActivityId = 1;
+  var nextActivityId : Nat = 1;
 
-  // Stable storage for user profiles — persists across canister upgrades/redeployments
+  // Enhanced orthogonal persistence — userProfiles persists automatically
   var userProfileEntries : [(Principal, UserProfile)] = [];
   let userProfiles = Map.fromIter<Principal, UserProfile>(userProfileEntries.vals());
 
-  // Persist userProfiles to stable storage before upgrade
-  system func preupgrade() {
-    userProfileEntries := userProfiles.entries().toArray();
-  };
-
-  // Clear the temporary entries array after upgrade
-  system func postupgrade() {
-    userProfileEntries := [];
-  };
-
   let activities = List.empty<Activity>();
 
-  public shared ({ caller }) func incrementInvestorCount() : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
+  public shared func incrementInvestorCount() : async () {
     platformStats := {
       platformStats with
       registeredInvestors = platformStats.registeredInvestors + 1;
     };
   };
 
-  public shared ({ caller }) func incrementCommunityMemberCount() : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
+  public shared func incrementCommunityMemberCount() : async () {
     platformStats := {
       platformStats with
       communityMembers = platformStats.communityMembers + 1;
     };
   };
 
-  public shared ({ caller }) func updateBitcoinAddress(newAddress : Text) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
+  public shared func updateBitcoinAddress(newAddress : Text) : async () {
+    if (newAddress.size() < 10) {
+      Runtime.trap("Invalid Bitcoin address");
     };
-    if (newAddress.size() < 10) { Runtime.trap("Invalid Bitcoin address, current address: " # platformStats.featuredBitcoinAddress : Text) };
     platformStats := {
       platformStats with
       featuredBitcoinAddress = newAddress;
     };
   };
 
-  public shared ({ caller }) func updateMarketPrices(btcPrice : Float, ethPrice : Float) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
+  public shared func updateMarketPrices(btcPrice : Float, ethPrice : Float) : async () {
     marketPrices := {
       btcPriceUSD = btcPrice;
       ethPriceUSD = ethPrice;
@@ -141,13 +109,10 @@ actor {
     };
   };
 
-  public shared ({ caller }) func addActivity(amount : Float, activityType : ActivityType, description : Text) : async {
+  public shared func addActivity(amount : Float, activityType : ActivityType, description : Text) : async {
     id : Nat;
     timestamp : Time.Time;
   } {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
     let newActivity : Activity = {
       amount;
       activityType;
@@ -158,116 +123,67 @@ actor {
     };
     activities.add(newActivity);
     nextActivityId += 1;
-
-    {
-      id = newActivity.id;
-      timestamp = newActivity.timestamp;
-    };
+    { id = newActivity.id; timestamp = newActivity.timestamp };
   };
 
-  public shared ({ caller }) func updateActivityStatus(activityId : Nat, newStatus : ActivityStatus) : async Activity {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
-    };
-    switch (activities.toArray().find(func(a) { a.id == activityId })) {
-      case (null) { Runtime.trap("Activity not found") };
+  public shared func updateActivityStatus(activityId : Nat, newStatus : ActivityStatus) : async ?Activity {
+    switch (activities.toArray().find<Activity>(func(a) { a.id == activityId })) {
+      case (null) { null };
       case (?activity) {
         let newActivity = { activity with status = newStatus };
-        let activitiesArray = activities.toArray();
-        let updatedArray = activitiesArray.map(
-          func(activity) {
-            if (activity.id == activityId) {
-              newActivity;
-            } else {
-              activity;
-            };
-          }
-        );
+        let arr = activities.toArray();
+        let updated = arr.map(func(act) {
+          if (act.id == activityId) { newActivity } else { act };
+        });
         activities.clear();
-        activities.addAll(updatedArray.values());
-        newActivity;
+        activities.addAll(updated.vals());
+        ?newActivity;
       };
     };
   };
 
-  public query ({ caller }) func getPlatformStats() : async PlatformStats {
+  public query func getPlatformStats() : async PlatformStats {
     platformStats;
   };
 
-  public query ({ caller }) func getMarketPrices() : async MarketPrices {
+  public query func getMarketPrices() : async MarketPrices {
     marketPrices;
   };
 
-  public query ({ caller }) func getAllActivities() : async [Activity] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view activities");
-    };
-    activities.toArray().sort();
+  public query func getAllActivities() : async [Activity] {
+    let arr = activities.toArray();
+    arr.sort<Activity>(func(a, b) { Int.compare(b.timestamp, a.timestamp) });
   };
 
-  public query ({ caller }) func getActivityById(activityId : Nat) : async Activity {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view activities");
-    };
-    switch (activities.toArray().find(func(a) { a.id == activityId })) {
-      case (null) { Runtime.trap("Activity not found") };
-      case (?activity) { activity };
-    };
+  public query func getActivityById(activityId : Nat) : async ?Activity {
+    activities.toArray().find<Activity>(func(a) { a.id == activityId });
   };
 
   public shared ({ caller }) func registerUserProfile(displayName : Text, gmail : Text) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can register profiles");
-    };
-    if (gmail.size() < 2) {
-      Runtime.trap("Invalid email address: too short");
-    };
+    if (gmail.size() < 2) { Runtime.trap("Invalid email address: too short") };
     if (displayName.size() < 1) { Runtime.trap("Display name cannot be empty") };
     if (displayName.size() > 50) { Runtime.trap("Display name too long") };
-    userProfiles.add(
-      caller,
-      {
-        displayName;
-        gmail;
-      },
-    );
+    userProfiles.add(caller, { displayName; gmail });
   };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view profiles");
-    };
     userProfiles.get(caller);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+    if (caller != user) {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };
     userProfiles.get(user);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
-    };
     userProfiles.add(caller, profile);
   };
 
-  public shared ({ caller }) func updateMyUserProfile(displayName : Text, gmail : Text) : async UserProfile {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can update profiles");
-    };
-    switch (userProfiles.get(caller)) {
-      case (null) { Runtime.trap("Profile not found, please register") };
-      case (?profile) {
-        let updatedProfile : UserProfile = {
-          displayName;
-          gmail;
-        };
-        userProfiles.add(caller, updatedProfile);
-        updatedProfile;
-      };
-    };
+  public shared ({ caller }) func updateMyUserProfile(displayName : Text, gmail : Text) : async ?UserProfile {
+    let updatedProfile : UserProfile = { displayName; gmail };
+    userProfiles.add(caller, updatedProfile);
+    ?updatedProfile;
   };
 };

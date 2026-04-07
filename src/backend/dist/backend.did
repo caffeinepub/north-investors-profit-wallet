@@ -1,0 +1,64 @@
+type UserProfile = 
+ record {
+   displayName: text;
+   gmail: text;
+ };
+type Time = int;
+type PlatformStats = 
+ record {
+   communityMembers: nat;
+   featuredBitcoinAddress: text;
+   registeredInvestors: nat;
+   totalBTC: float64;
+   totalUSDBalance: float64;
+ };
+type MarketPrices = 
+ record {
+   btcPriceUSD: float64;
+   ethPriceUSD: float64;
+   lastUpdated: Time;
+ };
+type ActivityType = 
+ variant {
+   deposit;
+   interestPayment;
+   referralBonus;
+   withdrawal;
+ };
+type ActivityStatus = 
+ variant {
+   completed;
+   failed;
+   pending;
+ };
+type Activity = 
+ record {
+   activityType: ActivityType;
+   amount: float64;
+   description: text;
+   id: nat;
+   status: ActivityStatus;
+   timestamp: Time;
+ };
+service : {
+  addActivity: (amount: float64, activityType: ActivityType, description:
+   text) -> (record {
+               id: nat;
+               timestamp: Time;
+             });
+  getActivityById: (activityId: nat) -> (opt Activity) query;
+  getAllActivities: () -> (vec Activity) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getMarketPrices: () -> (MarketPrices) query;
+  getPlatformStats: () -> (PlatformStats) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  incrementCommunityMemberCount: () -> ();
+  incrementInvestorCount: () -> ();
+  registerUserProfile: (displayName: text, gmail: text) -> ();
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  updateActivityStatus: (activityId: nat, newStatus: ActivityStatus) ->
+   (opt Activity);
+  updateBitcoinAddress: (newAddress: text) -> ();
+  updateMarketPrices: (btcPrice: float64, ethPrice: float64) -> ();
+  updateMyUserProfile: (displayName: text, gmail: text) -> (opt UserProfile);
+}

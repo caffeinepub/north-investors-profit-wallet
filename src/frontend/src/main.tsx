@@ -1,7 +1,8 @@
+import { InternetIdentityProvider } from "@caffeineai/core-infrastructure";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { InternetIdentityProvider } from "./hooks/useInternetIdentity";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import "./index.css";
 
 BigInt.prototype.toJSON = function () {
@@ -17,9 +18,11 @@ declare global {
 const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={queryClient}>
-    <InternetIdentityProvider>
-      <App />
-    </InternetIdentityProvider>
-  </QueryClientProvider>,
+  <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <InternetIdentityProvider>
+        <App />
+      </InternetIdentityProvider>
+    </QueryClientProvider>
+  </ThemeProvider>,
 );

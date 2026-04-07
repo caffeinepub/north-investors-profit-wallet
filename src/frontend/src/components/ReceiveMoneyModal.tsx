@@ -31,12 +31,14 @@ function generateAccountNumber(name: string) {
 function QrCodeCanvas({
   value,
   size = 160,
+  color,
 }: {
   value: string;
   size?: number;
   color?: string;
 }) {
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&bgcolor=0B1220&color=D4AF37&margin=2`;
+  const colorHex = (color ?? "#D4AF37").replace("#", "");
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&bgcolor=0B1220&color=${colorHex}&margin=2`;
   return (
     <div className="flex justify-center py-3">
       <img
@@ -64,6 +66,8 @@ export function ReceiveMoneyModal({
   const [savedGmail, setSavedGmail] = useState("");
   const [savedPhone, setSavedPhone] = useState("");
   const [linkSaved, setLinkSaved] = useState(false);
+  const [copiedBtcDetails, setCopiedBtcDetails] = useState(false);
+  const [copiedUsdtDetails, setCopiedUsdtDetails] = useState(false);
 
   const accountNumber = generateAccountNumber(displayName);
 
@@ -71,6 +75,21 @@ export function ReceiveMoneyModal({
     try {
       await navigator.clipboard.writeText(text);
       toast.success(`${label} copied!`);
+    } catch {
+      toast.error("Failed to copy.");
+    }
+  };
+
+  const copyDetailAddr = async (
+    addr: string,
+    label: string,
+    setter: (v: boolean) => void,
+  ) => {
+    try {
+      await navigator.clipboard.writeText(addr);
+      toast.success(`${label} copied!`);
+      setter(true);
+      setTimeout(() => setter(false), 2000);
     } catch {
       toast.error("Failed to copy.");
     }
@@ -380,6 +399,99 @@ export function ReceiveMoneyModal({
                   </span>
                 </div>
               ))}
+
+              {/* BTC Wallet Address row */}
+              <div
+                className="flex items-start justify-between gap-2"
+                style={{
+                  borderBottom: "1px solid rgba(34,50,74,0.5)",
+                  paddingBottom: "10px",
+                }}
+              >
+                <span
+                  className="text-xs flex-shrink-0"
+                  style={{ color: "#8A95A8" }}
+                >
+                  BTC Wallet Address
+                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="text-xs font-semibold font-mono text-right truncate"
+                    style={{ color: "#D4AF37", maxWidth: "140px" }}
+                    title={BTC_ADDRESS}
+                  >
+                    {BTC_ADDRESS}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyDetailAddr(
+                        BTC_ADDRESS,
+                        "BTC Address",
+                        setCopiedBtcDetails,
+                      )
+                    }
+                    className="flex-shrink-0 p-1 rounded transition-all hover:brightness-125"
+                    style={{
+                      background: "rgba(212,175,55,0.12)",
+                      border: "1px solid rgba(212,175,55,0.3)",
+                      color: copiedBtcDetails ? "#2ECC71" : "#D4AF37",
+                    }}
+                    data-ocid="receive_money.btc_details_copy.button"
+                  >
+                    {copiedBtcDetails ? (
+                      <CheckCircle2 className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* USDT Wallet Address row */}
+              <div
+                className="flex items-start justify-between gap-2"
+                style={{ paddingBottom: "4px" }}
+              >
+                <span
+                  className="text-xs flex-shrink-0"
+                  style={{ color: "#8A95A8" }}
+                >
+                  USDT Wallet Address (TRC-20)
+                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="text-xs font-semibold font-mono text-right truncate"
+                    style={{ color: "#2ECC71", maxWidth: "140px" }}
+                    title={USDT_ADDRESS}
+                  >
+                    {USDT_ADDRESS}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyDetailAddr(
+                        USDT_ADDRESS,
+                        "USDT Address",
+                        setCopiedUsdtDetails,
+                      )
+                    }
+                    className="flex-shrink-0 p-1 rounded transition-all hover:brightness-125"
+                    style={{
+                      background: "rgba(46,204,113,0.1)",
+                      border: "1px solid rgba(46,204,113,0.3)",
+                      color: copiedUsdtDetails ? "#2ECC71" : "#2ECC71",
+                    }}
+                    data-ocid="receive_money.usdt_details_copy.button"
+                  >
+                    {copiedUsdtDetails ? (
+                      <CheckCircle2 className="w-3 h-3" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Deposit instructions */}
@@ -402,14 +514,14 @@ export function ReceiveMoneyModal({
               >
                 Send your required activation deposit of{" "}
                 <span style={{ color: "#D4AF37", fontWeight: 700 }}>
-                  $120,000.00
+                  $1,200,000.00
                 </span>{" "}
                 to unlock your full portfolio and enable withdrawals.
               </p>
               <div className="space-y-2">
                 <div>
                   <div className="text-xs mb-1" style={{ color: "#A9B4C6" }}>
-                    BTC Address
+                    BTC Deposit Address
                   </div>
                   <div
                     style={{
@@ -423,7 +535,7 @@ export function ReceiveMoneyModal({
                 </div>
                 <div>
                   <div className="text-xs mb-1" style={{ color: "#A9B4C6" }}>
-                    USDT TRC-20
+                    USDT Deposit Address (TRC-20)
                   </div>
                   <div
                     style={{

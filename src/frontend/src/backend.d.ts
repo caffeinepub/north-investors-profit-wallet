@@ -43,31 +43,23 @@ export enum ActivityType {
     referralBonus = "referralBonus",
     interestPayment = "interestPayment"
 }
-export enum UserRole {
-    admin = "admin",
-    user = "user",
-    guest = "guest"
-}
 export interface backendInterface {
     addActivity(amount: number, activityType: ActivityType, description: string): Promise<{
         id: bigint;
         timestamp: Time;
     }>;
-    assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    getActivityById(activityId: bigint): Promise<Activity>;
+    getActivityById(activityId: bigint): Promise<Activity | null>;
     getAllActivities(): Promise<Array<Activity>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
-    getCallerUserRole(): Promise<UserRole>;
     getMarketPrices(): Promise<MarketPrices>;
     getPlatformStats(): Promise<PlatformStats>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     incrementCommunityMemberCount(): Promise<void>;
     incrementInvestorCount(): Promise<void>;
-    isCallerAdmin(): Promise<boolean>;
     registerUserProfile(displayName: string, gmail: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    updateActivityStatus(activityId: bigint, newStatus: ActivityStatus): Promise<Activity>;
+    updateActivityStatus(activityId: bigint, newStatus: ActivityStatus): Promise<Activity | null>;
     updateBitcoinAddress(newAddress: string): Promise<void>;
     updateMarketPrices(btcPrice: number, ethPrice: number): Promise<void>;
-    updateMyUserProfile(displayName: string, gmail: string): Promise<UserProfile>;
+    updateMyUserProfile(displayName: string, gmail: string): Promise<UserProfile | null>;
 }

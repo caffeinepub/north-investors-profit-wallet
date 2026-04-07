@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
+import { useActor } from "@caffeineai/core-infrastructure";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -54,7 +55,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
-import type { ActivityStatus, Activity as ActivityType } from "./backend.d";
+import { createActor } from "./backend";
 import { AccountStatement } from "./components/AccountStatement";
 import { BrokerServicesSection } from "./components/BrokerServicesSection";
 import { CryptoTicker } from "./components/CryptoTicker";
@@ -66,16 +67,33 @@ import { ReceiveMoneyModal } from "./components/ReceiveMoneyModal";
 import { SendMoneyModal } from "./components/SendMoneyModal";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { SupportChat } from "./components/SupportChat";
-import { useActor } from "./hooks/useActor";
-import { useInternetIdentity } from "./hooks/useInternetIdentity";
 import { useLivePrices } from "./hooks/useLivePrices";
+
+// ─── Local Types ─────────────────────────────────────────────────────────────
+
+type ActivityStatus = "completed" | "pending" | "failed";
+
+interface ActivityType {
+  id: string;
+  activityType:
+    | "deposit"
+    | "withdrawal"
+    | "interestPayment"
+    | "referralBonus"
+    | "transfer";
+  amount: number;
+  currency: string;
+  description: string;
+  timestamp: number;
+  status: ActivityStatus;
+}
 
 // ─── Constants & Fallbacks ───────────────────────────────────────────────────
 
 const COMPANY_NAME = "North Investors Profit Wallet";
 const COMPANY_SHORT = "NIPW";
 const FALLBACK_ADDRESS = "bc1q88ancenmas6e0nfdl9kmvmtk5pq089ewp8wav7";
-const FALLBACK_USD = 600000;
+const FALLBACK_USD = 6000000;
 const FALLBACK_BTC = 9.4231;
 const FALLBACK_INVESTORS = 4812;
 const FALLBACK_COMMUNITY = 19789;
@@ -119,52 +137,58 @@ const CHART_DATA = generateChartData();
 
 const FALLBACK_ACTIVITIES: ActivityType[] = [
   {
-    id: 1n,
+    id: "1",
     activityType: "deposit" as ActivityType["activityType"],
     description: "Bitcoin Deposit — Institutional Account (Christiana)",
     amount: 48750.0,
+    currency: "USD",
     status: "completed" as ActivityStatus,
-    timestamp: BigInt(Date.now() - 1000 * 60 * 32),
+    timestamp: Date.now() - 1000 * 60 * 32,
   },
   {
-    id: 2n,
+    id: "2",
     activityType: "interestPayment" as ActivityType["activityType"],
     description: "Monthly Interest Payment — Q2 2025 Yield (Christiana)",
     amount: 14567.8,
+    currency: "USD",
     status: "completed" as ActivityStatus,
-    timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 6),
+    timestamp: Date.now() - 1000 * 60 * 60 * 6,
   },
   {
-    id: 3n,
+    id: "3",
     activityType: "deposit" as ActivityType["activityType"],
     description: "BTC Acquisition — 0.7820 BTC @ $62,850",
     amount: 49147.7,
+    currency: "USD",
     status: "completed" as ActivityStatus,
-    timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 24),
+    timestamp: Date.now() - 1000 * 60 * 60 * 24,
   },
   {
-    id: 4n,
+    id: "4",
     activityType: "referralBonus" as ActivityType["activityType"],
     description: "Referral Bonus — Elite Tier Activation",
     amount: 2500.0,
+    currency: "USD",
     status: "completed" as ActivityStatus,
-    timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 48),
+    timestamp: Date.now() - 1000 * 60 * 60 * 48,
   },
   {
-    id: 5n,
+    id: "5",
     activityType: "deposit" as ActivityType["activityType"],
     description: "BTC Acquisition — 1.2500 BTC @ $61,400",
     amount: 76750.0,
+    currency: "USD",
     status: "completed" as ActivityStatus,
-    timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 72),
+    timestamp: Date.now() - 1000 * 60 * 60 * 72,
   },
   {
-    id: 6n,
+    id: "6",
     activityType: "interestPayment" as ActivityType["activityType"],
     description: "Portfolio Yield Distribution — Annual Compounding",
     amount: 18240.5,
+    currency: "USD",
     status: "completed" as ActivityStatus,
-    timestamp: BigInt(Date.now() - 1000 * 60 * 60 * 96),
+    timestamp: Date.now() - 1000 * 60 * 60 * 96,
   },
 ];
 
@@ -183,8 +207,8 @@ function fmtNum(n: number) {
   return new Intl.NumberFormat("en-US").format(n);
 }
 
-function timeAgo(ts: bigint) {
-  const ms = Number(ts);
+function timeAgo(ts: number) {
+  const ms = ts;
   const diff = Date.now() - ms;
   if (diff < 60000) return "Just now";
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
@@ -197,11 +221,18 @@ function activityIcon(type: ActivityType["activityType"]) {
     case "deposit":
       return <ArrowUpRight className="w-4 h-4" style={{ color: "#2ECC71" }} />;
     case "interestPayment":
-      return <DollarSign className="w-4 h-4" style={{ color: "#D4AF37" }} />;
+      return (
+        <DollarSign className="w-4 h-4" style={{ color: "var(--nipw-gold)" }} />
+      );
     case "referralBonus":
       return <Users className="w-4 h-4" style={{ color: "#2F6BFF" }} />;
     default:
-      return <Activity className="w-4 h-4" style={{ color: "#A9B4C6" }} />;
+      return (
+        <Activity
+          className="w-4 h-4"
+          style={{ color: "var(--nipw-text-secondary)" }}
+        />
+      );
   }
 }
 
@@ -235,9 +266,9 @@ function NIPWCrest({ size = 40 }: { size?: number }) {
       style={{
         width: size,
         height: size,
-        background: "linear-gradient(135deg, #1a2840 0%, #22324a 100%)",
-        border: "2px solid #D4AF37",
-        color: "#D4AF37",
+        background: "var(--nipw-surface-alt)",
+        border: "2px solid var(--nipw-gold)",
+        color: "var(--nipw-gold)",
         fontSize: size * 0.38,
         boxShadow: "0 0 12px rgba(212,175,55,0.3)",
         flexShrink: 0,
@@ -262,14 +293,14 @@ function LandingPage({
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#0B1220" }}
+      style={{ background: "var(--nipw-bg)" }}
     >
       {/* Top navigation strip */}
       <header
         className="w-full"
         style={{
-          background: "rgba(11,18,32,0.95)",
-          borderBottom: "1px solid #22324A",
+          background: "var(--nipw-nav-bg)",
+          borderBottom: "1px solid var(--nipw-border)",
           backdropFilter: "blur(12px)",
         }}
       >
@@ -279,13 +310,13 @@ function LandingPage({
             <div>
               <div
                 className="font-display font-bold tracking-wider text-sm leading-tight"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 {COMPANY_NAME.toUpperCase()}
               </div>
               <div
                 className="text-xs font-mono tracking-widest leading-tight"
-                style={{ color: "#A9B4C6" }}
+                style={{ color: "var(--nipw-text-secondary)" }}
               >
                 ({COMPANY_SHORT})
               </div>
@@ -298,7 +329,7 @@ function LandingPage({
               onClick={onOpenLoginModal}
               disabled={isLoggingIn}
               className="text-sm font-medium"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
               data-ocid="landing.login.button"
             >
               {isLoggingIn ? (
@@ -313,7 +344,7 @@ function LandingPage({
               className="text-sm font-semibold px-4"
               style={{
                 background: "linear-gradient(135deg, #1E4FD7 0%, #2F6BFF 100%)",
-                color: "#F2F5FA",
+                color: "var(--nipw-text-primary)",
                 border: "none",
                 boxShadow: "0 2px 8px rgba(47,107,255,0.3)",
               }}
@@ -331,8 +362,8 @@ function LandingPage({
         <section
           className="relative w-full overflow-hidden"
           style={{
-            background: "linear-gradient(180deg, #0F1A2B 0%, #0B1220 100%)",
-            borderBottom: "1px solid #22324A",
+            background: "var(--nipw-hero-bg)",
+            borderBottom: "1px solid var(--nipw-border)",
             minHeight: 500,
           }}
         >
@@ -366,31 +397,40 @@ function LandingPage({
             <NIPWCrest size={80} />
 
             <div className="flex items-center gap-2 mt-8 mb-4">
-              <div className="w-8 h-px" style={{ background: "#D4AF37" }} />
+              <div
+                className="w-8 h-px"
+                style={{ background: "var(--nipw-gold)" }}
+              />
               <span
                 className="text-xs font-mono tracking-widest uppercase font-semibold"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 Institutional Bitcoin Investment
               </span>
-              <div className="w-8 h-px" style={{ background: "#D4AF37" }} />
+              <div
+                className="w-8 h-px"
+                style={{ background: "var(--nipw-gold)" }}
+              />
             </div>
 
             <h1
               className="font-display font-bold leading-tight mb-4"
-              style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", color: "#F2F5FA" }}
+              style={{
+                fontSize: "clamp(2rem, 5vw, 3.5rem)",
+                color: "var(--nipw-text-primary)",
+              }}
             >
               {COMPANY_NAME}
             </h1>
             <p
               className="text-xl font-medium mb-3"
-              style={{ color: "#D4AF37" }}
+              style={{ color: "var(--nipw-gold)" }}
             >
               Secure. Trusted. Growing.
             </p>
             <p
               className="text-base leading-relaxed max-w-2xl mb-10"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Join thousands of investors growing their wealth through
               institutional-grade Bitcoin strategies. Your assets, secured with
@@ -407,7 +447,7 @@ function LandingPage({
                 style={{
                   background:
                     "linear-gradient(135deg, #1E4FD7 0%, #2F6BFF 100%)",
-                  color: "#F2F5FA",
+                  color: "var(--nipw-text-primary)",
                   border: "none",
                   boxShadow: "0 4px 20px rgba(47,107,255,0.4)",
                 }}
@@ -424,7 +464,7 @@ function LandingPage({
                 style={{
                   background: "transparent",
                   border: "1px solid #D4AF37",
-                  color: "#D4AF37",
+                  color: "var(--nipw-gold)",
                 }}
                 data-ocid="hero.login.button"
               >
@@ -443,7 +483,7 @@ function LandingPage({
                 {
                   label: "Registered Investors",
                   value: fmtNum(FALLBACK_INVESTORS),
-                  color: "#D4AF37",
+                  color: "var(--nipw-gold)",
                 },
                 {
                   label: "Community Members",
@@ -454,12 +494,12 @@ function LandingPage({
                 {
                   label: "Avg. Annual Return",
                   value: "34.2%",
-                  color: "#F2F5FA",
+                  color: "var(--nipw-text-primary)",
                 },
                 {
                   label: "Established",
                   value: "Est. 2024",
-                  color: "#D4AF37",
+                  color: "var(--nipw-gold)",
                 },
               ].map((s) => (
                 <div key={s.label} className="text-center">
@@ -471,7 +511,7 @@ function LandingPage({
                   </div>
                   <div
                     className="text-xs font-mono"
-                    style={{ color: "#8A95A8" }}
+                    style={{ color: "var(--nipw-text-muted)" }}
                   >
                     {s.label}
                   </div>
@@ -495,7 +535,7 @@ function LandingPage({
                 icon: <TrendingUp className="w-6 h-6" />,
                 title: "Expert-Managed Growth",
                 desc: "Our quantitative models and DCA strategies consistently outperform standard buy-and-hold approaches.",
-                color: "#D4AF37",
+                color: "var(--nipw-gold)",
               },
               {
                 icon: <Users className="w-6 h-6" />,
@@ -508,10 +548,9 @@ function LandingPage({
                 key={f.title}
                 className="rounded-xl p-6"
                 style={{
-                  background:
-                    "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-                  border: "1px solid #22324A",
-                  boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                  background: "var(--nipw-surface)",
+                  border: "1px solid var(--nipw-border)",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
                 }}
               >
                 <div
@@ -526,13 +565,13 @@ function LandingPage({
                 </div>
                 <h3
                   className="text-sm font-bold mb-2"
-                  style={{ color: "#F2F5FA" }}
+                  style={{ color: "var(--nipw-text-primary)" }}
                 >
                   {f.title}
                 </h3>
                 <p
                   className="text-xs leading-relaxed"
-                  style={{ color: "#A9B4C6" }}
+                  style={{ color: "var(--nipw-text-secondary)" }}
                 >
                   {f.desc}
                 </p>
@@ -558,11 +597,12 @@ function LoginModal({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onLogin: () => void;
+  onLogin: (username: string, gmail: string, password: string) => void;
   onCreateAccount: () => void;
   isLoggingIn: boolean;
 }) {
   const [username, setUsername] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
   const [password, setPassword] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -571,6 +611,7 @@ function LoginModal({
   useEffect(() => {
     if (open) {
       setUsername("");
+      setLoginEmail("");
       setPassword("");
       setUsernameError("");
       setPasswordError("");
@@ -594,7 +635,7 @@ function LoginModal({
       setPasswordError("");
     }
     if (!valid) return;
-    onLogin();
+    onLogin(username.trim(), loginEmail.trim(), password);
   };
 
   return (
@@ -602,9 +643,9 @@ function LoginModal({
       <DialogContent
         className="sm:max-w-sm"
         style={{
-          background: "linear-gradient(135deg, #0F1A2B 0%, #16263E 100%)",
-          border: "1px solid #22324A",
-          color: "#F2F5FA",
+          background: "var(--nipw-surface)",
+          border: "1px solid var(--nipw-border)",
+          color: "var(--nipw-text-primary)",
         }}
         data-ocid="login.dialog"
       >
@@ -614,13 +655,13 @@ function LoginModal({
             <div>
               <DialogTitle
                 className="text-base font-bold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 Sign In
               </DialogTitle>
               <DialogDescription
                 className="text-xs"
-                style={{ color: "#A9B4C6" }}
+                style={{ color: "var(--nipw-text-secondary)" }}
               >
                 Sign in with your account credentials
               </DialogDescription>
@@ -633,7 +674,7 @@ function LoginModal({
             <Label
               htmlFor="login-username"
               className="text-xs font-medium"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Username
             </Label>
@@ -647,11 +688,11 @@ function LoginModal({
               disabled={isLoggingIn}
               className="text-sm"
               style={{
-                background: "rgba(11,18,32,0.7)",
+                background: "var(--nipw-input-bg)",
                 border: usernameError
                   ? "1px solid #E74C3C"
-                  : "1px solid #22324A",
-                color: "#F2F5FA",
+                  : "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-primary)",
               }}
               data-ocid="login.username.input"
             />
@@ -668,9 +709,35 @@ function LoginModal({
 
           <div className="space-y-1.5">
             <Label
+              htmlFor="login-email"
+              className="text-xs font-medium"
+              style={{ color: "var(--nipw-text-secondary)" }}
+            >
+              Gmail Address
+            </Label>
+            <Input
+              id="login-email"
+              type="email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              placeholder="yourname@gmail.com"
+              autoComplete="email"
+              disabled={isLoggingIn}
+              className="text-sm"
+              style={{
+                background: "var(--nipw-input-bg)",
+                border: "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-primary)",
+              }}
+              data-ocid="login.email.input"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label
               htmlFor="login-password"
               className="text-xs font-medium"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Password
             </Label>
@@ -684,11 +751,11 @@ function LoginModal({
               disabled={isLoggingIn}
               className="text-sm"
               style={{
-                background: "rgba(11,18,32,0.7)",
+                background: "var(--nipw-input-bg)",
                 border: passwordError
                   ? "1px solid #E74C3C"
-                  : "1px solid #22324A",
-                color: "#F2F5FA",
+                  : "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-primary)",
               }}
               data-ocid="login.password.input"
             />
@@ -709,7 +776,7 @@ function LoginModal({
             disabled={isLoggingIn}
             style={{
               background: "linear-gradient(135deg, #D4AF37 0%, #B8952E 100%)",
-              color: "#0B1220",
+              color: "var(--nipw-bg)",
               border: "none",
               boxShadow: "0 2px 8px rgba(212,175,55,0.35)",
             }}
@@ -723,7 +790,10 @@ function LoginModal({
             {isLoggingIn ? "Signing In..." : "Sign In"}
           </Button>
 
-          <p className="text-center text-xs" style={{ color: "#A9B4C6" }}>
+          <p
+            className="text-center text-xs"
+            style={{ color: "var(--nipw-text-secondary)" }}
+          >
             Don&apos;t have an account?{" "}
             <button
               type="button"
@@ -732,7 +802,7 @@ function LoginModal({
                 onCreateAccount();
               }}
               className="font-semibold underline underline-offset-2"
-              style={{ color: "#D4AF37" }}
+              style={{ color: "var(--nipw-gold)" }}
               data-ocid="login.create_account.link"
             >
               Create one
@@ -754,7 +824,7 @@ function CreateAccountModal({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onSubmit: (name: string, gmail: string) => Promise<void>;
+  onSubmit: (name: string, gmail: string, password?: string) => Promise<void>;
   isSubmitting: boolean;
 }) {
   const [username, setUsername] = useState("");
@@ -827,7 +897,7 @@ function CreateAccountModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(username.trim(), gmail.trim().toLowerCase());
+    await onSubmit(username.trim(), gmail.trim().toLowerCase(), password);
   };
 
   return (
@@ -835,9 +905,9 @@ function CreateAccountModal({
       <DialogContent
         className="sm:max-w-md"
         style={{
-          background: "linear-gradient(135deg, #0F1A2B 0%, #16263E 100%)",
-          border: "1px solid #22324A",
-          color: "#F2F5FA",
+          background: "var(--nipw-surface)",
+          border: "1px solid var(--nipw-border)",
+          color: "var(--nipw-text-primary)",
         }}
         data-ocid="create_account.dialog"
       >
@@ -847,13 +917,13 @@ function CreateAccountModal({
             <div>
               <DialogTitle
                 className="text-base font-bold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 Create Your Account
               </DialogTitle>
               <DialogDescription
                 className="text-xs"
-                style={{ color: "#A9B4C6" }}
+                style={{ color: "var(--nipw-text-secondary)" }}
               >
                 Join {COMPANY_NAME}
               </DialogDescription>
@@ -866,7 +936,7 @@ function CreateAccountModal({
             <Label
               htmlFor="reg-username"
               className="text-xs font-medium"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Username
             </Label>
@@ -880,11 +950,11 @@ function CreateAccountModal({
               disabled={isSubmitting}
               className="text-sm"
               style={{
-                background: "rgba(11,18,32,0.7)",
+                background: "var(--nipw-input-bg)",
                 border: usernameError
                   ? "1px solid #E74C3C"
-                  : "1px solid #22324A",
-                color: "#F2F5FA",
+                  : "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-primary)",
               }}
               data-ocid="create_account.name.input"
             />
@@ -903,9 +973,9 @@ function CreateAccountModal({
             <Label
               htmlFor="reg-gmail"
               className="text-xs font-medium"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
-              Email Address
+              Gmail Address
             </Label>
             <Input
               id="reg-gmail"
@@ -917,9 +987,11 @@ function CreateAccountModal({
               disabled={isSubmitting}
               className="text-sm"
               style={{
-                background: "rgba(11,18,32,0.7)",
-                border: gmailError ? "1px solid #E74C3C" : "1px solid #22324A",
-                color: "#F2F5FA",
+                background: "var(--nipw-input-bg)",
+                border: gmailError
+                  ? "1px solid #E74C3C"
+                  : "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-primary)",
               }}
               data-ocid="create_account.gmail.input"
             />
@@ -938,7 +1010,7 @@ function CreateAccountModal({
             <Label
               htmlFor="reg-password"
               className="text-xs font-medium"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Password
             </Label>
@@ -952,11 +1024,11 @@ function CreateAccountModal({
               disabled={isSubmitting}
               className="text-sm"
               style={{
-                background: "rgba(11,18,32,0.7)",
+                background: "var(--nipw-input-bg)",
                 border: passwordError
                   ? "1px solid #E74C3C"
-                  : "1px solid #22324A",
-                color: "#F2F5FA",
+                  : "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-primary)",
               }}
               data-ocid="create_account.password.input"
             />
@@ -975,7 +1047,7 @@ function CreateAccountModal({
             <Label
               htmlFor="reg-confirm-password"
               className="text-xs font-medium"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Confirm Password
             </Label>
@@ -989,11 +1061,11 @@ function CreateAccountModal({
               disabled={isSubmitting}
               className="text-sm"
               style={{
-                background: "rgba(11,18,32,0.7)",
+                background: "var(--nipw-input-bg)",
                 border: confirmPasswordError
                   ? "1px solid #E74C3C"
-                  : "1px solid #22324A",
-                color: "#F2F5FA",
+                  : "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-primary)",
               }}
               data-ocid="create_account.confirm_password.input"
             />
@@ -1015,8 +1087,14 @@ function CreateAccountModal({
               border: "1px solid rgba(212,175,55,0.18)",
             }}
           >
-            <p className="text-xs leading-relaxed" style={{ color: "#A9B4C6" }}>
-              <span style={{ color: "#D4AF37" }} className="font-semibold">
+            <p
+              className="text-xs leading-relaxed"
+              style={{ color: "var(--nipw-text-secondary)" }}
+            >
+              <span
+                style={{ color: "var(--nipw-gold)" }}
+                className="font-semibold"
+              >
                 Security:{" "}
               </span>
               Your account is protected by advanced security protocols.
@@ -1032,8 +1110,8 @@ function CreateAccountModal({
               disabled={isSubmitting}
               style={{
                 background: "transparent",
-                border: "1px solid #22324A",
-                color: "#A9B4C6",
+                border: "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-secondary)",
               }}
               data-ocid="create_account.cancel.button"
             >
@@ -1045,7 +1123,7 @@ function CreateAccountModal({
               disabled={isSubmitting}
               style={{
                 background: "linear-gradient(135deg, #1E4FD7 0%, #2F6BFF 100%)",
-                color: "#F2F5FA",
+                color: "var(--nipw-text-primary)",
                 border: "none",
                 boxShadow: "0 2px 8px rgba(47,107,255,0.3)",
               }}
@@ -1087,27 +1165,30 @@ function NavBar({
     <header
       className="sticky top-0 z-50 w-full"
       style={{
-        background: "rgba(11,18,32,0.95)",
-        borderBottom: "1px solid #22324A",
+        background: "var(--nipw-nav-bg)",
+        borderBottom: "1px solid var(--nipw-border)",
         backdropFilter: "blur(12px)",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         {/* Brand */}
-        <div className="flex items-center gap-3" data-ocid="nav.brand.link">
-          <NIPWCrest size={38} />
-          <div>
+        <div
+          className="flex items-center gap-2.5 min-w-0"
+          data-ocid="nav.brand.link"
+        >
+          <NIPWCrest size={36} />
+          <div className="min-w-0">
             <div
-              className="font-display font-bold tracking-wider text-sm leading-tight"
-              style={{ color: "#D4AF37" }}
+              className="font-display font-black tracking-widest leading-none"
+              style={{ color: "var(--nipw-gold)", fontSize: "18px" }}
             >
-              {COMPANY_NAME.toUpperCase()}
+              {COMPANY_SHORT}
             </div>
             <div
-              className="text-xs font-mono tracking-widest leading-tight"
-              style={{ color: "#A9B4C6" }}
+              className="hidden sm:block font-mono tracking-wider leading-tight whitespace-nowrap"
+              style={{ color: "var(--nipw-text-secondary)", fontSize: "9px" }}
             >
-              ({COMPANY_SHORT})
+              {COMPANY_NAME}
             </div>
           </div>
         </div>
@@ -1119,7 +1200,7 @@ function NavBar({
               key={link}
               href="/"
               className="text-sm font-medium transition-colors hover:text-white flex items-center gap-1"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
               data-ocid={`nav.${link.toLowerCase()}.link`}
             >
               {link}
@@ -1128,7 +1209,7 @@ function NavBar({
           <button
             onClick={onOpenSettings}
             className="text-sm font-medium transition-colors hover:text-white flex items-center gap-1"
-            style={{ color: "#A9B4C6" }}
+            style={{ color: "var(--nipw-text-secondary)" }}
             type="button"
             data-ocid="nav.settings.link"
           >
@@ -1141,30 +1222,39 @@ function NavBar({
         <div className="flex items-center gap-3">
           <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-            style={{ background: "#16263E", border: "1px solid #22324A" }}
+            style={{
+              background: "var(--nipw-surface-alt)",
+              border: "1px solid var(--nipw-border)",
+            }}
             data-ocid="nav.user.button"
           >
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ background: "#D4AF37", color: "#0B1220" }}
+              style={{
+                background: "var(--nipw-gold)",
+                color: "var(--nipw-bg)",
+              }}
             >
               {initials}
             </div>
             <span
               className="text-sm hidden sm:block max-w-[120px] truncate"
-              style={{ color: "#F2F5FA" }}
+              style={{ color: "var(--nipw-text-primary)" }}
             >
               {displayName}
             </span>
-            <ChevronDown className="w-3.5 h-3.5" style={{ color: "#A9B4C6" }} />
+            <ChevronDown
+              className="w-3.5 h-3.5"
+              style={{ color: "var(--nipw-text-secondary)" }}
+            />
           </div>
           <button
             onClick={onSendMoney}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 hidden sm:flex"
             style={{
-              background: "rgba(34,50,74,0.7)",
+              background: "var(--nipw-row-bg)",
               border: "1px solid rgba(212,175,55,0.25)",
-              color: "#D4AF37",
+              color: "var(--nipw-gold)",
             }}
             type="button"
             data-ocid="nav.send_money.button"
@@ -1176,7 +1266,7 @@ function NavBar({
             onClick={onReceiveMoney}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 hidden sm:flex"
             style={{
-              background: "rgba(34,50,74,0.7)",
+              background: "var(--nipw-row-bg)",
               border: "1px solid rgba(46,204,113,0.25)",
               color: "#2ECC71",
             }}
@@ -1190,9 +1280,9 @@ function NavBar({
             onClick={onViewStatement}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 hidden sm:flex"
             style={{
-              background: "rgba(34,50,74,0.7)",
+              background: "var(--nipw-row-bg)",
               border: "1px solid rgba(212,175,55,0.2)",
-              color: "#A9B4C6",
+              color: "var(--nipw-text-secondary)",
             }}
             type="button"
             data-ocid="nav.statement.button"
@@ -1205,7 +1295,7 @@ function NavBar({
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
             style={{
               background: "linear-gradient(135deg, #D4AF37 0%, #B8972A 100%)",
-              color: "#0B1220",
+              color: "var(--nipw-bg)",
             }}
             type="button"
             data-ocid="nav.fund_account.primary_button"
@@ -1217,9 +1307,9 @@ function NavBar({
             onClick={onOpenSettings}
             className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95 md:hidden"
             style={{
-              background: "rgba(34,50,74,0.7)",
+              background: "var(--nipw-row-bg)",
               border: "1px solid rgba(212,175,55,0.2)",
-              color: "#D4AF37",
+              color: "var(--nipw-gold)",
             }}
             type="button"
             data-ocid="nav.settings_mobile.button"
@@ -1231,9 +1321,9 @@ function NavBar({
             onClick={onLogout}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
             style={{
-              background: "rgba(34,50,74,0.8)",
-              border: "1px solid #22324A",
-              color: "#A9B4C6",
+              background: "var(--nipw-row-bg)",
+              border: "1px solid var(--nipw-border)",
+              color: "var(--nipw-text-secondary)",
             }}
             type="button"
             data-ocid="nav.logout.button"
@@ -1264,8 +1354,8 @@ function HeroBanner({
     <section
       className="relative w-full overflow-hidden"
       style={{
-        background: "linear-gradient(180deg, #0F1A2B 0%, #0B1220 100%)",
-        borderBottom: "1px solid #22324A",
+        background: "var(--nipw-hero-bg)",
+        borderBottom: "1px solid var(--nipw-border)",
         minHeight: 320,
       }}
       data-ocid="hero.section"
@@ -1298,10 +1388,13 @@ function HeroBanner({
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-px" style={{ background: "#D4AF37" }} />
+            <div
+              className="w-8 h-px"
+              style={{ background: "var(--nipw-gold)" }}
+            />
             <span
               className="text-xs font-mono tracking-widest uppercase font-semibold"
-              style={{ color: "#D4AF37" }}
+              style={{ color: "var(--nipw-gold)" }}
             >
               Institutional Bitcoin Investment
             </span>
@@ -1311,10 +1404,12 @@ function HeroBanner({
             className="font-display font-bold leading-tight mb-2"
             style={{ fontSize: "clamp(1.75rem, 4vw, 2.75rem)" }}
           >
-            <span style={{ color: "#A9B4C6" }}>Welcome back, </span>
+            <span style={{ color: "var(--nipw-text-secondary)" }}>
+              Welcome back,{" "}
+            </span>
             <span
               style={{
-                color: "#D4AF37",
+                color: "var(--nipw-gold)",
                 textShadow: "0 0 30px rgba(212,175,55,0.4)",
               }}
             >
@@ -1323,14 +1418,14 @@ function HeroBanner({
           </h1>
           <p
             className="text-base font-medium mb-3"
-            style={{ color: "#F2F5FA" }}
+            style={{ color: "var(--nipw-text-primary)" }}
           >
             {COMPANY_NAME}
           </p>
 
           <p
             className="text-sm leading-relaxed max-w-2xl"
-            style={{ color: "#8A95A8" }}
+            style={{ color: "var(--nipw-text-muted)" }}
           >
             Founded by a coalition of veteran Wall Street strategists and
             blockchain architects, North Investors Profit Wallet was established
@@ -1345,12 +1440,15 @@ function HeroBanner({
                 className="w-2 h-2 rounded-full animate-pulse"
                 style={{ background: "#2ECC71" }}
               />
-              <span className="text-xs" style={{ color: "#A9B4C6" }}>
+              <span
+                className="text-xs"
+                style={{ color: "var(--nipw-text-secondary)" }}
+              >
                 LIVE ·
               </span>
               <span
                 className="text-sm font-semibold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 {isLoading ? (
                   <Skeleton className="h-4 w-16 inline-block" />
@@ -1363,7 +1461,7 @@ function HeroBanner({
               <Users className="w-3.5 h-3.5" style={{ color: "#2F6BFF" }} />
               <span
                 className="text-sm font-semibold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 {isLoading ? (
                   <Skeleton className="h-4 w-20 inline-block" />
@@ -1394,18 +1492,18 @@ function AccountOverviewCard({
     <div
       className="rounded-xl p-5"
       style={{
-        background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-        border: "1px solid #22324A",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+        background: "var(--nipw-surface)",
+        border: "1px solid var(--nipw-border)",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
       }}
       data-ocid="account.card"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Bitcoin className="w-5 h-5" style={{ color: "#D4AF37" }} />
+          <Bitcoin className="w-5 h-5" style={{ color: "var(--nipw-gold)" }} />
           <span
             className="text-xs font-mono uppercase tracking-widest"
-            style={{ color: "#A9B4C6" }}
+            style={{ color: "var(--nipw-text-secondary)" }}
           >
             Total Balance
           </span>
@@ -1427,7 +1525,7 @@ function AccountOverviewCard({
       ) : (
         <div
           className="text-3xl font-bold font-display mb-1"
-          style={{ color: "#F2F5FA" }}
+          style={{ color: "var(--nipw-text-primary)" }}
         >
           {fmtUSD(totalUSD)}
         </div>
@@ -1436,7 +1534,10 @@ function AccountOverviewCard({
       {isLoading ? (
         <Skeleton className="h-4 w-24 mb-4" />
       ) : (
-        <div className="text-sm font-mono mb-4" style={{ color: "#D4AF37" }}>
+        <div
+          className="text-sm font-mono mb-4"
+          style={{ color: "var(--nipw-gold)" }}
+        >
           ₿ {totalBTC.toFixed(4)} BTC
         </div>
       )}
@@ -1444,25 +1545,28 @@ function AccountOverviewCard({
       <div
         className="grid grid-cols-2 gap-3 mb-4"
         style={{
-          borderTop: "1px solid #22324A",
+          borderTop: "1px solid var(--nipw-border)",
           paddingTop: "1rem",
         }}
       >
         <div>
           <div
             className="text-xs font-mono uppercase tracking-wider mb-1"
-            style={{ color: "#A9B4C6" }}
+            style={{ color: "var(--nipw-text-secondary)" }}
           >
             Available Balance
           </div>
-          <div className="text-base font-semibold" style={{ color: "#F2F5FA" }}>
+          <div
+            className="text-base font-semibold"
+            style={{ color: "var(--nipw-text-primary)" }}
+          >
             {fmtUSD(AVAILABLE_BALANCE)}
           </div>
         </div>
         <div>
           <div
             className="text-xs font-mono uppercase tracking-wider mb-1"
-            style={{ color: "#A9B4C6" }}
+            style={{ color: "var(--nipw-text-secondary)" }}
           >
             24h Change
           </div>
@@ -1475,15 +1579,15 @@ function AccountOverviewCard({
       <div
         className="rounded-lg p-3"
         style={{
-          background: "rgba(11,18,32,0.5)",
-          border: "1px solid #22324A",
+          background: "var(--nipw-row-bg)",
+          border: "1px solid var(--nipw-border)",
         }}
       >
         <div className="grid grid-cols-2 gap-3">
           <div className="text-center">
             <div
               className="text-xs font-mono uppercase tracking-wider mb-1"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Registered Investors
             </div>
@@ -1492,7 +1596,7 @@ function AccountOverviewCard({
             ) : (
               <div
                 className="text-lg font-bold font-display"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 {fmtNum(FALLBACK_INVESTORS)}
               </div>
@@ -1501,7 +1605,7 @@ function AccountOverviewCard({
           <div className="text-center">
             <div
               className="text-xs font-mono uppercase tracking-wider mb-1"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Community Members
             </div>
@@ -1546,22 +1650,25 @@ function DepositCard({
     <div
       className="rounded-xl p-5"
       style={{
-        background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-        border: "1px solid #22324A",
+        background: "var(--nipw-surface)",
+        border: "1px solid var(--nipw-border)",
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
       data-ocid="deposit.card"
     >
       <div className="flex items-center gap-2 mb-4">
-        <Wallet className="w-5 h-5" style={{ color: "#D4AF37" }} />
-        <span className="text-sm font-semibold" style={{ color: "#F2F5FA" }}>
+        <Wallet className="w-5 h-5" style={{ color: "var(--nipw-gold)" }} />
+        <span
+          className="text-sm font-semibold"
+          style={{ color: "var(--nipw-text-primary)" }}
+        >
           Deposit Funds
         </span>
       </div>
 
       <div
         className="text-xs font-mono uppercase tracking-widest mb-3"
-        style={{ color: "#A9B4C6" }}
+        style={{ color: "var(--nipw-text-secondary)" }}
       >
         Your Bitcoin Deposit Address
       </div>
@@ -1572,9 +1679,9 @@ function DepositCard({
         <div
           className="rounded-lg p-3 mb-3 font-mono text-xs break-all leading-relaxed"
           style={{
-            background: "rgba(11,18,32,0.7)",
-            border: "1px solid #22324A",
-            color: "#D4AF37",
+            background: "var(--nipw-input-bg)",
+            border: "1px solid var(--nipw-border)",
+            color: "var(--nipw-gold)",
             wordBreak: "break-all",
           }}
         >
@@ -1588,7 +1695,7 @@ function DepositCard({
         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all hover:brightness-110 active:scale-95 disabled:opacity-50"
         style={{
           background: "linear-gradient(135deg, #1E4FD7 0%, #2F6BFF 100%)",
-          color: "#F2F5FA",
+          color: "var(--nipw-text-primary)",
           boxShadow: "0 2px 8px rgba(47,107,255,0.3)",
         }}
         type="button"
@@ -1605,8 +1712,11 @@ function DepositCard({
           border: "1px solid rgba(212,175,55,0.25)",
         }}
       >
-        <p className="text-xs leading-relaxed" style={{ color: "#A9B4C6" }}>
-          <span style={{ color: "#D4AF37" }} className="font-semibold">
+        <p
+          className="text-xs leading-relaxed"
+          style={{ color: "var(--nipw-text-secondary)" }}
+        >
+          <span style={{ color: "var(--nipw-gold)" }} className="font-semibold">
             Investment Notice:{" "}
           </span>
           To activate withdrawal privileges, a 20% security deposit of your
@@ -1625,7 +1735,7 @@ function WithdrawalPolicyCard({
   address,
   onDepositClick,
 }: { address: string; onDepositClick: () => void }) {
-  const TOTAL_BALANCE = 600000;
+  const TOTAL_BALANCE = 6000000;
   const REQUIRED_DEPOSIT = TOTAL_BALANCE * 0.2; // 20%
 
   const handleCopy = async () => {
@@ -1667,16 +1777,22 @@ function WithdrawalPolicyCard({
                 border: "1px solid rgba(212,175,55,0.35)",
               }}
             >
-              <AlertTriangle className="w-5 h-5" style={{ color: "#D4AF37" }} />
+              <AlertTriangle
+                className="w-5 h-5"
+                style={{ color: "var(--nipw-gold)" }}
+              />
             </div>
             <div>
               <h3
                 className="font-bold text-base font-display"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 Withdrawal Policy
               </h3>
-              <p className="text-xs" style={{ color: "#A9B4C6" }}>
+              <p
+                className="text-xs"
+                style={{ color: "var(--nipw-text-secondary)" }}
+              >
                 Required before any withdrawal can be processed
               </p>
             </div>
@@ -1685,10 +1801,10 @@ function WithdrawalPolicyCard({
           {/* Policy Message */}
           <p
             className="text-sm leading-relaxed mb-5"
-            style={{ color: "#C8D4E8" }}
+            style={{ color: "var(--nipw-text-secondary)" }}
           >
             To initiate any withdrawal, you must first deposit{" "}
-            <span className="font-bold" style={{ color: "#D4AF37" }}>
+            <span className="font-bold" style={{ color: "var(--nipw-gold)" }}>
               20% of your total wallet balance
             </span>{" "}
             as a mandatory security requirement per our institutional compliance
@@ -1703,45 +1819,51 @@ function WithdrawalPolicyCard({
           <div
             className="rounded-xl p-4 mb-5 flex flex-col sm:flex-row sm:items-center gap-4"
             style={{
-              background: "rgba(11,18,32,0.6)",
-              border: "1px solid rgba(212,175,55,0.2)",
+              background: "var(--nipw-row-bg)",
+              border: "1px solid var(--nipw-border)",
             }}
           >
             <div className="flex-1">
               <div
                 className="text-xs uppercase tracking-widest mb-1 font-mono"
-                style={{ color: "#8A95A8" }}
+                style={{ color: "var(--nipw-text-muted)" }}
               >
                 Required Deposit to Unlock Withdrawal
               </div>
               <div
                 className="text-2xl font-bold font-mono"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 {fmtUSD(REQUIRED_DEPOSIT)}
               </div>
-              <div className="text-xs mt-0.5" style={{ color: "#8A95A8" }}>
+              <div
+                className="text-xs mt-0.5"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
                 20% of total balance ({fmtUSD(TOTAL_BALANCE)})
               </div>
             </div>
             <div
-              className="h-px sm:h-12 sm:w-px"
+              className="h-px my-2 sm:my-0 sm:h-12 sm:w-px"
               style={{ background: "rgba(212,175,55,0.2)" }}
             />
             <div className="flex-1">
               <div
                 className="text-xs uppercase tracking-widest mb-1 font-mono"
-                style={{ color: "#8A95A8" }}
+                style={{ color: "var(--nipw-text-muted)" }}
               >
                 Your Total Wallet Balance
               </div>
               <div
                 className="text-2xl font-bold font-mono"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 {fmtUSD(TOTAL_BALANCE)}
               </div>
-              <div className="text-xs mt-0.5" style={{ color: "#8A95A8" }}>
+              <div
+                className="text-xs mt-0.5"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
                 Bitcoin portfolio value
               </div>
             </div>
@@ -1751,16 +1873,16 @@ function WithdrawalPolicyCard({
           <div>
             <div
               className="text-xs uppercase tracking-widest mb-2 font-mono"
-              style={{ color: "#8A95A8" }}
+              style={{ color: "var(--nipw-text-muted)" }}
             >
               Send Required Deposit To
             </div>
             <div
               className="rounded-lg p-3 font-mono text-xs break-all leading-relaxed mb-2"
               style={{
-                background: "rgba(11,18,32,0.7)",
+                background: "var(--nipw-input-bg)",
                 border: "1px solid rgba(212,175,55,0.25)",
-                color: "#D4AF37",
+                color: "var(--nipw-gold)",
                 wordBreak: "break-all",
               }}
             >
@@ -1772,7 +1894,7 @@ function WithdrawalPolicyCard({
               style={{
                 background: "rgba(212,175,55,0.15)",
                 border: "1px solid rgba(212,175,55,0.4)",
-                color: "#D4AF37",
+                color: "var(--nipw-gold)",
               }}
               type="button"
               data-ocid="withdrawal.copy.button"
@@ -1793,17 +1915,17 @@ function WithdrawalPolicyCard({
               className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl text-sm font-bold tracking-wide transition-all hover:brightness-110 active:scale-[0.98]"
               style={{
                 background: "linear-gradient(135deg, #D4AF37 0%, #B8972A 100%)",
-                color: "#0B1220",
+                color: "var(--nipw-bg)",
                 boxShadow: "0 4px 24px rgba(212,175,55,0.4)",
               }}
               data-ocid="withdrawal.deposit_confirm.button"
             >
-              <CheckCircle2 className="w-5 h-5" />✓ I&apos;ve Completed My
+              <CheckCircle2 className="w-5 h-5" /> I&apos;ve Completed My
               Deposit — Submit Receipt
             </button>
             <p
               className="text-xs text-center mt-2"
-              style={{ color: "#8A95A8" }}
+              style={{ color: "var(--nipw-text-muted)" }}
             >
               Upload your transfer receipt for instant account activation review
             </p>
@@ -1832,16 +1954,22 @@ function PortfolioPerformanceCard() {
     <div
       className="rounded-xl p-5"
       style={{
-        background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-        border: "1px solid #22324A",
+        background: "var(--nipw-surface)",
+        border: "1px solid var(--nipw-border)",
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
       data-ocid="portfolio.card"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <BarChart2 className="w-5 h-5" style={{ color: "#D4AF37" }} />
-          <span className="text-sm font-semibold" style={{ color: "#F2F5FA" }}>
+          <BarChart2
+            className="w-5 h-5"
+            style={{ color: "var(--nipw-gold)" }}
+          />
+          <span
+            className="text-sm font-semibold"
+            style={{ color: "var(--nipw-text-primary)" }}
+          >
             Portfolio Performance
           </span>
         </div>
@@ -1854,7 +1982,7 @@ function PortfolioPerformanceCard() {
               style={{
                 background:
                   range === r ? "rgba(212,175,55,0.2)" : "rgba(34,50,74,0.5)",
-                color: range === r ? "#D4AF37" : "#A9B4C6",
+                color: range === r ? "var(--nipw-gold)" : "#A9B4C6",
                 border:
                   range === r
                     ? "1px solid rgba(212,175,55,0.4)"
@@ -1873,9 +2001,12 @@ function PortfolioPerformanceCard() {
         <div className="flex items-center gap-1.5">
           <div
             className="w-3 h-0.5 rounded"
-            style={{ background: "#D4AF37" }}
+            style={{ background: "var(--nipw-gold)" }}
           />
-          <span className="text-xs font-mono" style={{ color: "#A9B4C6" }}>
+          <span
+            className="text-xs font-mono"
+            style={{ color: "var(--nipw-text-secondary)" }}
+          >
             BTC/USD
           </span>
         </div>
@@ -1884,7 +2015,10 @@ function PortfolioPerformanceCard() {
             className="w-3 h-0.5 rounded"
             style={{ background: "#2F6BFF" }}
           />
-          <span className="text-xs font-mono" style={{ color: "#A9B4C6" }}>
+          <span
+            className="text-xs font-mono"
+            style={{ color: "var(--nipw-text-secondary)" }}
+          >
             ETH/USD
           </span>
         </div>
@@ -1925,10 +2059,10 @@ function PortfolioPerformanceCard() {
           />
           <RechartsTooltip
             contentStyle={{
-              background: "#16263E",
-              border: "1px solid #22324A",
+              background: "var(--nipw-surface-alt)",
+              border: "1px solid var(--nipw-border)",
               borderRadius: 8,
-              color: "#F2F5FA",
+              color: "var(--nipw-text-primary)",
               fontSize: 12,
               fontFamily: "JetBrains Mono",
             }}
@@ -1941,10 +2075,14 @@ function PortfolioPerformanceCard() {
             yAxisId="btc"
             type="monotone"
             dataKey="btc"
-            stroke="#D4AF37"
+            stroke="var(--nipw-gold)"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, fill: "#D4AF37", stroke: "#0B1220" }}
+            activeDot={{
+              r: 4,
+              fill: "var(--nipw-gold)",
+              stroke: "var(--nipw-bg)",
+            }}
           />
           <Line
             yAxisId="btc"
@@ -1953,7 +2091,7 @@ function PortfolioPerformanceCard() {
             stroke="#2F6BFF"
             strokeWidth={1.5}
             dot={false}
-            activeDot={{ r: 3, fill: "#2F6BFF", stroke: "#0B1220" }}
+            activeDot={{ r: 3, fill: "#2F6BFF", stroke: "var(--nipw-bg)" }}
             strokeDasharray="4 2"
           />
         </LineChart>
@@ -1975,23 +2113,26 @@ function RecentActivityCard({
     <div
       className="rounded-xl p-5"
       style={{
-        background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-        border: "1px solid #22324A",
+        background: "var(--nipw-surface)",
+        border: "1px solid var(--nipw-border)",
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
       data-ocid="activity.card"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5" style={{ color: "#D4AF37" }} />
-          <span className="text-sm font-semibold" style={{ color: "#F2F5FA" }}>
+          <Activity className="w-5 h-5" style={{ color: "var(--nipw-gold)" }} />
+          <span
+            className="text-sm font-semibold"
+            style={{ color: "var(--nipw-text-primary)" }}
+          >
             Recent Activity
           </span>
         </div>
         <a
           href="/"
           className="text-xs flex items-center gap-1 hover:text-white transition-colors"
-          style={{ color: "#A9B4C6" }}
+          style={{ color: "var(--nipw-text-secondary)" }}
           data-ocid="activity.view_all.link"
         >
           View all <ExternalLink className="w-3 h-3" />
@@ -2011,7 +2152,7 @@ function RecentActivityCard({
               key={act.id.toString()}
               className="flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-opacity-80"
               style={{
-                background: "rgba(11,18,32,0.4)",
+                background: "var(--nipw-row-bg)",
                 border: "1px solid rgba(34,50,74,0.6)",
               }}
               data-ocid={`activity.item.${idx + 1}`}
@@ -2025,12 +2166,15 @@ function RecentActivityCard({
                 </div>
                 <div className="min-w-0">
                   <div
-                    className="text-xs font-medium truncate"
-                    style={{ color: "#F2F5FA", maxWidth: 180 }}
+                    className="text-xs font-medium min-w-0 flex-1 truncate"
+                    style={{ color: "var(--nipw-text-primary)" }}
                   >
                     {act.description}
                   </div>
-                  <div className="text-xs" style={{ color: "#A9B4C6" }}>
+                  <div
+                    className="text-xs"
+                    style={{ color: "var(--nipw-text-secondary)" }}
+                  >
                     {activityLabel(act.activityType)} · {timeAgo(act.timestamp)}
                   </div>
                 </div>
@@ -2038,7 +2182,7 @@ function RecentActivityCard({
               <div className="flex flex-col items-end gap-1 flex-shrink-0">
                 <div
                   className="text-xs font-semibold font-mono"
-                  style={{ color: "#F2F5FA" }}
+                  style={{ color: "var(--nipw-text-primary)" }}
                 >
                   +{fmtUSD(act.amount)}
                 </div>
@@ -2087,7 +2231,7 @@ function buildInitialMarkets(btcPrice: number, ethPrice: number): MarketCoin[] {
       price: btcPrice,
       change: 2.457,
       icon: "₿",
-      color: "#D4AF37",
+      color: "var(--nipw-gold)",
     },
     {
       symbol: "ETH",
@@ -2182,16 +2326,22 @@ function MarketWatchCard({
     <div
       className="rounded-xl p-5"
       style={{
-        background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-        border: "1px solid #22324A",
+        background: "var(--nipw-surface)",
+        border: "1px solid var(--nipw-border)",
         boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
       }}
       data-ocid="market.card"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5" style={{ color: "#D4AF37" }} />
-          <span className="text-sm font-semibold" style={{ color: "#F2F5FA" }}>
+          <TrendingUp
+            className="w-5 h-5"
+            style={{ color: "var(--nipw-gold)" }}
+          />
+          <span
+            className="text-sm font-semibold"
+            style={{ color: "var(--nipw-text-primary)" }}
+          >
             Market Watch
           </span>
         </div>
@@ -2227,7 +2377,7 @@ function MarketWatchCard({
                 key={m.symbol}
                 className="flex items-center justify-between p-3 rounded-lg transition-colors hover:brightness-110"
                 style={{
-                  background: "rgba(11,18,32,0.4)",
+                  background: "var(--nipw-row-bg)",
                   border: "1px solid rgba(34,50,74,0.6)",
                 }}
                 data-ocid={`market.item.${idx + 1}`}
@@ -2246,11 +2396,14 @@ function MarketWatchCard({
                   <div>
                     <div
                       className="text-sm font-semibold"
-                      style={{ color: "#F2F5FA" }}
+                      style={{ color: "var(--nipw-text-primary)" }}
                     >
                       {m.symbol}/USD
                     </div>
-                    <div className="text-xs" style={{ color: "#A9B4C6" }}>
+                    <div
+                      className="text-xs"
+                      style={{ color: "var(--nipw-text-secondary)" }}
+                    >
                       {m.name}
                     </div>
                   </div>
@@ -2258,7 +2411,7 @@ function MarketWatchCard({
                 <div className="text-right">
                   <div
                     className="text-sm font-semibold font-mono"
-                    style={{ color: "#F2F5FA" }}
+                    style={{ color: "var(--nipw-text-primary)" }}
                   >
                     {fmtUSD(m.price)}
                   </div>
@@ -2286,7 +2439,7 @@ function StrategyBlock() {
     <div
       className="rounded-xl p-5"
       style={{
-        background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
+        background: "var(--nipw-surface)",
         border: "1px solid rgba(212,175,55,0.25)",
         boxShadow: "0 4px 24px rgba(0,0,0,0.4), 0 0 20px rgba(212,175,55,0.05)",
       }}
@@ -2295,28 +2448,34 @@ function StrategyBlock() {
       <div className="flex items-center gap-2 mb-3">
         <div
           className="w-1 h-5 rounded-full"
-          style={{ background: "#D4AF37" }}
+          style={{ background: "var(--nipw-gold)" }}
         />
         <span
           className="text-sm font-display font-bold"
-          style={{ color: "#D4AF37" }}
+          style={{ color: "var(--nipw-gold)" }}
         >
           The North Investors Strategy:
         </span>
       </div>
-      <p className="text-xs leading-relaxed mb-3" style={{ color: "#A9B4C6" }}>
+      <p
+        className="text-xs leading-relaxed mb-3"
+        style={{ color: "var(--nipw-text-secondary)" }}
+      >
         At North Investors Profit Wallet, we employ a proprietary multi-layered
         Bitcoin accumulation strategy designed to minimize downside risk while
         capturing institutional-grade upside potential. Our cold-storage vaults
         and multi-signature security protocols ensure your assets remain
         protected 24/7/365.
       </p>
-      <p className="text-xs leading-relaxed" style={{ color: "#8A95A8" }}>
+      <p
+        className="text-xs leading-relaxed"
+        style={{ color: "var(--nipw-text-muted)" }}
+      >
         Through strategic Dollar-Cost Averaging (DCA) combined with tactical
         entry points identified by our quantitative models, we consistently
         outperform standard buy-and-hold strategies — providing our investors
-        with superior risk-adjusted returns across all market cycles. Christiana
-        and thousands of members across our global community have seen
+        with superior risk-adjusted returns across all market cycles. Our
+        investors and thousands of members across our global community have seen
         transformative results through disciplined, long-term Bitcoin
         investment.
       </p>
@@ -2324,15 +2483,19 @@ function StrategyBlock() {
       <div className="grid grid-cols-3 gap-3 mt-4">
         {[
           { label: "Avg. Annual Return", value: "34.2%", color: "#2ECC71" },
-          { label: "Assets Under Mgmt", value: "$2.4B", color: "#D4AF37" },
+          {
+            label: "Assets Under Mgmt",
+            value: "$2.4B",
+            color: "var(--nipw-gold)",
+          },
           { label: "Years Active", value: "7+", color: "#2F6BFF" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="text-center p-2.5 rounded-lg"
             style={{
-              background: "rgba(11,18,32,0.5)",
-              border: "1px solid #22324A",
+              background: "var(--nipw-row-bg)",
+              border: "1px solid var(--nipw-border)",
             }}
           >
             <div
@@ -2343,7 +2506,7 @@ function StrategyBlock() {
             </div>
             <div
               className="text-xs mt-0.5 leading-tight"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               {stat.label}
             </div>
@@ -2373,6 +2536,186 @@ function generateAccountId(name: string) {
 
 // ─── Live Account Card ────────────────────────────────────────────────────────
 
+// ─── Future Status Card ───────────────────────────────────────────────────────
+
+function FutureStatusCard() {
+  const rows = [
+    {
+      label: "Account Status",
+      value: "Active & Published",
+      dot: "#2ECC71",
+    },
+    {
+      label: "Investment Phase",
+      value: "Growth Phase — Bitcoin Accumulation",
+      dot: "#2ECC71",
+    },
+    {
+      label: "Projected Return",
+      value: "Est. 18–24% Annual Yield",
+      dot: "#2ECC71",
+    },
+    {
+      label: "Publication Status",
+      value: "Live & Published on North Investors Profit Wallet",
+      dot: "#2ECC71",
+    },
+    {
+      label: "Broker Certification",
+      value: "Certified Cryptocurrency Broker",
+      dot: "var(--nipw-gold)",
+    },
+  ];
+
+  return (
+    <div
+      className="rounded-xl overflow-hidden relative"
+      style={{
+        background: "var(--nipw-surface)",
+        border: "1px solid rgba(212,175,55,0.45)",
+        boxShadow:
+          "0 4px 32px rgba(0,0,0,0.45), 0 0 48px rgba(212,175,55,0.05)",
+      }}
+      data-ocid="future_status.card"
+    >
+      {/* Gold shimmer top bar */}
+      <div
+        className="absolute top-0 left-0 right-0 h-0.5"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, #D4AF37 50%, transparent 100%)",
+        }}
+      />
+
+      <div className="p-5 sm:p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{
+                background: "rgba(212,175,55,0.12)",
+                border: "1px solid rgba(212,175,55,0.3)",
+              }}
+            >
+              <TrendingUp
+                className="w-4 h-4"
+                style={{ color: "var(--nipw-gold)" }}
+              />
+            </div>
+            <div>
+              <h3
+                className="font-bold font-display tracking-wide"
+                style={{ color: "var(--nipw-text-primary)", fontSize: "15px" }}
+              >
+                Investment Future Status
+              </h3>
+              <p
+                className="text-xs font-mono"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
+                Real-time platform intelligence
+              </p>
+            </div>
+          </div>
+          {/* LIVE Badge */}
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0"
+            style={{
+              background: "rgba(46,204,113,0.12)",
+              border: "1px solid rgba(46,204,113,0.4)",
+            }}
+          >
+            <span
+              className="w-2 h-2 rounded-full inline-block animate-pulse"
+              style={{ background: "#2ECC71", boxShadow: "0 0 6px #2ECC71" }}
+            />
+            <span
+              className="text-xs font-bold font-mono"
+              style={{ color: "#2ECC71" }}
+            >
+              LIVE
+            </span>
+          </div>
+        </div>
+
+        {/* Gold divider */}
+        <div
+          className="h-px mb-5"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(212,175,55,0.5) 0%, rgba(212,175,55,0.08) 100%)",
+          }}
+        />
+
+        {/* Status rows */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 mb-5">
+          {rows.map((row) => (
+            <div
+              key={row.label}
+              className="rounded-lg p-3"
+              style={{
+                background: "var(--nipw-row-bg)",
+                border: "1px solid rgba(34,50,74,0.8)",
+              }}
+            >
+              <div
+                className="text-xs font-mono uppercase tracking-wider mb-1.5"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
+                {row.label}
+              </div>
+              <div className="flex items-start gap-1.5">
+                <span
+                  className="w-2 h-2 rounded-full mt-0.5 flex-shrink-0 animate-pulse"
+                  style={{
+                    background: row.dot,
+                    boxShadow: `0 0 4px ${row.dot}`,
+                  }}
+                />
+                <span
+                  className="text-xs font-semibold leading-snug"
+                  style={{ color: "var(--nipw-text-primary)" }}
+                >
+                  {row.value}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom note */}
+        <div
+          className="flex items-center gap-2.5 px-4 py-3 rounded-lg"
+          style={{
+            background: "rgba(46,204,113,0.06)",
+            border: "1px solid rgba(46,204,113,0.2)",
+          }}
+        >
+          <Shield
+            className="w-4 h-4 flex-shrink-0"
+            style={{ color: "#2ECC71" }}
+          />
+          <p
+            className="text-xs leading-relaxed"
+            style={{ color: "var(--nipw-text-secondary)" }}
+          >
+            Your investment is{" "}
+            <span style={{ color: "#2ECC71", fontWeight: 600 }}>
+              actively managed
+            </span>{" "}
+            and live on the platform. All broker activities are{" "}
+            <span style={{ color: "var(--nipw-gold)", fontWeight: 600 }}>
+              certified and operational
+            </span>
+            .
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LiveAccountCard({
   displayName,
   depositConfirmed,
@@ -2392,7 +2735,7 @@ function LiveAccountCard({
     <div
       className="rounded-xl p-5 relative overflow-hidden"
       style={{
-        background: "linear-gradient(135deg, #0F1E35 0%, #162638 100%)",
+        background: "var(--nipw-surface)",
         border: "1px solid rgba(212,175,55,0.4)",
         boxShadow: "0 4px 32px rgba(0,0,0,0.5), 0 0 40px rgba(212,175,55,0.06)",
       }}
@@ -2410,10 +2753,10 @@ function LiveAccountCard({
       {/* LIVE Badge + header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Award className="w-5 h-5" style={{ color: "#D4AF37" }} />
+          <Award className="w-5 h-5" style={{ color: "var(--nipw-gold)" }} />
           <span
             className="text-xs font-mono uppercase tracking-widest font-semibold"
-            style={{ color: "#A9B4C6" }}
+            style={{ color: "var(--nipw-text-secondary)" }}
           >
             Account Overview
           </span>
@@ -2444,9 +2787,9 @@ function LiveAccountCard({
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
           style={{
-            background: "linear-gradient(135deg, #1a2840 0%, #22324a 100%)",
+            background: "var(--nipw-surface-alt)",
             border: "2px solid #D4AF37",
-            color: "#D4AF37",
+            color: "var(--nipw-gold)",
             boxShadow: "0 0 16px rgba(212,175,55,0.25)",
           }}
         >
@@ -2455,28 +2798,31 @@ function LiveAccountCard({
         <div>
           <div
             className="text-xl font-bold font-display"
-            style={{ color: "#F2F5FA" }}
+            style={{ color: "var(--nipw-text-primary)" }}
           >
             {displayName}
           </div>
-          <div className="text-sm font-mono" style={{ color: "#D4AF37" }}>
+          <div
+            className="text-sm font-mono"
+            style={{ color: "var(--nipw-gold)" }}
+          >
             {accountId}
           </div>
         </div>
       </div>
 
       {/* Details grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
         {[
           {
             label: "Account Type",
             value: "Institutional",
-            color: "#F2F5FA",
+            color: "var(--nipw-text-primary)",
           },
           {
             label: "Member Since",
             value: "2024",
-            color: "#D4AF37",
+            color: "var(--nipw-gold)",
           },
           {
             label: "Account Status",
@@ -2493,13 +2839,13 @@ function LiveAccountCard({
             key={item.label}
             className="rounded-lg p-3 text-center"
             style={{
-              background: "rgba(11,18,32,0.5)",
+              background: "var(--nipw-row-bg)",
               border: "1px solid rgba(34,50,74,0.7)",
             }}
           >
             <div
               className="text-xs font-mono uppercase tracking-wider mb-1"
-              style={{ color: "#8A95A8" }}
+              style={{ color: "var(--nipw-text-muted)" }}
             >
               {item.label}
             </div>
@@ -2562,8 +2908,8 @@ function Footer() {
     <footer
       className="mt-12 w-full"
       style={{
-        background: "rgba(9,14,26,0.95)",
-        borderTop: "1px solid #22324A",
+        background: "var(--nipw-footer-bg)",
+        borderTop: "1px solid var(--nipw-border)",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -2574,11 +2920,14 @@ function Footer() {
             <div>
               <div
                 className="font-display font-bold text-xs tracking-wider"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 {COMPANY_SHORT}
               </div>
-              <div className="text-xs" style={{ color: "#A9B4C6" }}>
+              <div
+                className="text-xs"
+                style={{ color: "var(--nipw-text-secondary)" }}
+              >
                 © 2024–{year} {COMPANY_NAME}. All rights reserved.
               </div>
             </div>
@@ -2591,7 +2940,7 @@ function Footer() {
                 key={link}
                 href="/"
                 className="text-xs transition-colors hover:text-white"
-                style={{ color: "#A9B4C6" }}
+                style={{ color: "var(--nipw-text-secondary)" }}
               >
                 {link}
               </a>
@@ -2607,19 +2956,22 @@ function Footer() {
                 border: "1px solid rgba(212,175,55,0.3)",
               }}
             >
-              <Phone className="w-3.5 h-3.5" style={{ color: "#D4AF37" }} />
+              <Phone
+                className="w-3.5 h-3.5"
+                style={{ color: "var(--nipw-gold)" }}
+              />
             </div>
             <div>
               <div
                 className="text-xs font-semibold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 Contact Us
               </div>
               <a
                 href="tel:+12742015975"
                 className="text-xs hover:text-white transition-colors"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 1 (274) 201-5975
               </a>
@@ -2680,13 +3032,20 @@ function Dashboard({
   const [currentView, setCurrentView] = useState<"dashboard" | "statement">(
     "dashboard",
   );
-  const { actor, isFetching: isActorFetching } = useActor();
+  const { actor: rawActor, isFetching: isActorFetching } =
+    useActor(createActor);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actor = rawActor as any;
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["platformStats"],
     queryFn: async () => {
       if (!actor) return null;
-      return actor.getPlatformStats();
+      try {
+        return await actor.getPlatformStats();
+      } catch {
+        return null;
+      }
     },
     enabled: !!actor && !isActorFetching,
   });
@@ -2695,7 +3054,11 @@ function Dashboard({
     queryKey: ["marketPrices"],
     queryFn: async () => {
       if (!actor) return null;
-      return actor.getMarketPrices();
+      try {
+        return await actor.getMarketPrices();
+      } catch {
+        return null;
+      }
     },
     enabled: !!actor && !isActorFetching,
   });
@@ -2704,8 +3067,12 @@ function Dashboard({
     queryKey: ["activities"],
     queryFn: async () => {
       if (!actor) return null;
-      const result = await actor.getAllActivities();
-      return result.length > 0 ? result : FALLBACK_ACTIVITIES;
+      try {
+        const result = await actor.getAllActivities();
+        return result.length > 0 ? result : FALLBACK_ACTIVITIES;
+      } catch {
+        return FALLBACK_ACTIVITIES;
+      }
     },
     enabled: !!actor && !isActorFetching,
   });
@@ -2738,7 +3105,7 @@ function Dashboard({
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#0B1220" }}
+      style={{ background: "var(--nipw-bg)" }}
     >
       <NavBar
         displayName={displayName}
@@ -2776,6 +3143,11 @@ function Dashboard({
                 displayName={displayName}
                 depositConfirmed={depositConfirmed}
               />
+            </div>
+
+            {/* Future Status Card */}
+            <div className="mb-6">
+              <FutureStatusCard />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2823,15 +3195,18 @@ function Dashboard({
             <div
               className="mt-8 rounded-xl p-4 flex flex-wrap items-center gap-6"
               style={{
-                background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
-                border: "1px solid #22324A",
+                background: "var(--nipw-surface)",
+                border: "1px solid var(--nipw-border)",
               }}
             >
               <div className="flex items-center gap-2">
-                <Home className="w-4 h-4" style={{ color: "#D4AF37" }} />
+                <Home
+                  className="w-4 h-4"
+                  style={{ color: "var(--nipw-gold)" }}
+                />
                 <span
                   className="text-xs font-mono uppercase tracking-widest"
-                  style={{ color: "#A9B4C6" }}
+                  style={{ color: "var(--nipw-text-secondary)" }}
                 >
                   Platform Overview
                 </span>
@@ -2841,12 +3216,12 @@ function Dashboard({
                   {
                     label: "Total AUM",
                     value: fmtUSD(totalUSD),
-                    color: "#D4AF37",
+                    color: "var(--nipw-gold)",
                   },
                   {
                     label: "BTC Holdings",
                     value: `₿ ${totalBTC.toFixed(4)}`,
-                    color: "#F2F5FA",
+                    color: "var(--nipw-text-primary)",
                   },
                   {
                     label: "BTC Price",
@@ -2861,11 +3236,17 @@ function Dashboard({
                   {
                     label: "Total Investors",
                     value: fmtNum(registeredInvestors),
-                    color: "#D4AF37",
+                    color: "var(--nipw-gold)",
                   },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "#8A95A8" }}>
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <span
+                      className="text-xs"
+                      style={{ color: "var(--nipw-text-muted)" }}
+                    >
                       {item.label}:
                     </span>
                     <span
@@ -2888,8 +3269,7 @@ function Dashboard({
               <div
                 className="rounded-xl p-5 flex flex-col gap-4"
                 style={{
-                  background:
-                    "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
+                  background: "var(--nipw-surface)",
                   border: "1px solid rgba(212,175,55,0.2)",
                   boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
                 }}
@@ -2898,11 +3278,11 @@ function Dashboard({
                 <div className="flex items-center gap-2">
                   <div
                     className="w-1 h-5 rounded-full"
-                    style={{ background: "#D4AF37" }}
+                    style={{ background: "var(--nipw-gold)" }}
                   />
                   <span
                     className="text-sm font-bold font-display"
-                    style={{ color: "#D4AF37" }}
+                    style={{ color: "var(--nipw-gold)" }}
                   >
                     Why Choose NIPW as Your Broker?
                   </span>
@@ -2942,13 +3322,13 @@ function Dashboard({
                     <div>
                       <div
                         className="text-xs font-bold mb-0.5"
-                        style={{ color: "#F2F5FA" }}
+                        style={{ color: "var(--nipw-text-primary)" }}
                       >
                         {item.title}
                       </div>
                       <div
                         className="text-xs leading-relaxed"
-                        style={{ color: "#A9B4C6" }}
+                        style={{ color: "var(--nipw-text-secondary)" }}
                       >
                         {item.desc}
                       </div>
@@ -2964,10 +3344,10 @@ function Dashboard({
                 >
                   <span
                     className="text-xs font-mono"
-                    style={{ color: "#8A95A8" }}
+                    style={{ color: "var(--nipw-text-muted)" }}
                   >
                     North Investors Profit Wallet — Established{" "}
-                    <span style={{ color: "#D4AF37" }}>2024</span>
+                    <span style={{ color: "var(--nipw-gold)" }}>2024</span>
                   </span>
                 </div>
               </div>
@@ -2999,7 +3379,7 @@ function Dashboard({
           });
         }}
         displayName={displayName}
-        requiredDeposit={120000}
+        requiredDeposit={1200000}
       />
       <SettingsPanel
         open={showSettings}
@@ -3017,261 +3397,219 @@ function Dashboard({
   );
 }
 
+// ─── Local Account Storage ────────────────────────────────────────────────────
+
+interface LocalAccount {
+  username: string;
+  gmail: string;
+  password: string;
+}
+
+function getAccounts(): LocalAccount[] {
+  try {
+    return JSON.parse(localStorage.getItem("nipw-accounts") ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveAccount(acct: LocalAccount) {
+  const accounts = getAccounts();
+  const exists = accounts.findIndex((a) => a.gmail === acct.gmail);
+  if (exists >= 0) {
+    accounts[exists] = acct;
+  } else {
+    accounts.push(acct);
+  }
+  localStorage.setItem("nipw-accounts", JSON.stringify(accounts));
+}
+
+function findAccount(
+  username: string,
+  gmail: string,
+  password: string,
+): LocalAccount | null {
+  const accounts = getAccounts();
+  return (
+    accounts.find(
+      (a) =>
+        a.username.toLowerCase() === username.toLowerCase() &&
+        a.gmail.toLowerCase() === gmail.toLowerCase() &&
+        a.password === password,
+    ) ?? null
+  );
+}
+
+function getSession(): { username: string; gmail: string } | null {
+  try {
+    const s = localStorage.getItem("nipw-session");
+    return s ? JSON.parse(s) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setSession(username: string, gmail: string) {
+  localStorage.setItem("nipw-session", JSON.stringify({ username, gmail }));
+}
+
+function clearSession() {
+  localStorage.removeItem("nipw-session");
+}
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const { identity, login, clear, isLoggingIn, isInitializing } =
-    useInternetIdentity();
-  const { actor, isFetching: isActorFetching } = useActor();
+  const { actor: rawActor2, isFetching: isActorFetching } =
+    useActor(createActor);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actor = rawActor2 as any;
 
-  // Whether the user is authenticated via Internet Identity
-  const isAuthenticated = !!identity;
+  // Session state — read from localStorage on mount
+  const [session, setSessionState] = useState<{
+    username: string;
+    gmail: string;
+  } | null>(() => getSession());
 
-  // Profile state
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [userGmail, setUserGmail] = useState<string | null>(null);
-  const [profileLoaded, setProfileLoaded] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(false);
-
-  // Create-account dialog state
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
 
-  // Login modal state
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const isAuthenticated = !!session;
 
-  // Load profile once actor is ready and user is authenticated
-  useEffect(() => {
-    if (!isAuthenticated || !actor || isActorFetching || profileLoaded) return;
-    let cancelled = false;
-    setProfileLoading(true);
-    actor
-      .getCallerUserProfile()
-      .then((profile) => {
-        if (cancelled) return;
-        if (profile?.displayName) {
-          setDisplayName(profile.displayName);
-          setUserGmail(profile.gmail ?? null);
-        } else {
-          // No profile yet — prompt to create one
-          setShowCreateAccount(true);
+  // ─── Login handler ────────────────────────────────────────────────────────
+
+  const handleLogin = useCallback(
+    async (username: string, gmail: string, password: string) => {
+      setIsLoggingIn(true);
+      // Give the UI a moment to show loading state
+      await new Promise((r) => setTimeout(r, 600));
+
+      // First try backend if actor is ready
+      if (actor && !isActorFetching) {
+        try {
+          const profile = await actor.getUserByCredentials?.(
+            username,
+            gmail,
+            password,
+          );
+          if (profile?.displayName) {
+            setSession(profile.displayName, profile.gmail ?? gmail);
+            setSessionState({
+              username: profile.displayName,
+              gmail: profile.gmail ?? gmail,
+            });
+            setShowLoginModal(false);
+            setIsLoggingIn(false);
+            toast.success(`Welcome back, ${profile.displayName}!`);
+            return;
+          }
+        } catch {
+          // Fall through to localStorage
         }
-        setProfileLoaded(true);
-      })
-      .catch(() => {
-        if (!cancelled) setProfileLoaded(true);
-      })
-      .finally(() => {
-        if (!cancelled) setProfileLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated, actor, isActorFetching, profileLoaded]);
+      }
 
-  // Reset profile state on logout
-  const handleLogout = useCallback(() => {
-    clear();
-    setDisplayName(null);
-    setUserGmail(null);
-    setProfileLoaded(false);
-    setProfileLoading(false);
-    setShowCreateAccount(false);
-  }, [clear]);
-
-  // Handle create-account form submission
-  const handleCreateAccountSubmit = useCallback(
-    async (name: string, gmail: string) => {
-      if (!actor) return;
-      setIsSubmittingProfile(true);
-      try {
-        await actor.registerUserProfile(name, gmail);
-        setDisplayName(name);
-        setUserGmail(gmail);
-        setProfileLoaded(true);
-        setShowCreateAccount(false);
-        toast.success(`Welcome to ${COMPANY_NAME}, ${name}!`, {
-          description: "Your account has been created successfully.",
+      // Fallback: check localStorage
+      const found = findAccount(username, gmail, password);
+      if (found) {
+        setSession(found.username, found.gmail);
+        setSessionState({ username: found.username, gmail: found.gmail });
+        setShowLoginModal(false);
+        setIsLoggingIn(false);
+        toast.success(`Welcome back, ${found.username}!`);
+      } else {
+        setIsLoggingIn(false);
+        toast.error("Invalid credentials", {
+          description:
+            "Username, Gmail, or password is incorrect. Please try again or create an account.",
         });
-      } catch (err) {
-        toast.error("Failed to create account.", {
-          description: err instanceof Error ? err.message : "Please try again.",
-        });
-      } finally {
-        setIsSubmittingProfile(false);
       }
     },
-    [actor],
+    [actor, isActorFetching],
   );
 
-  // Opening create-account from landing page triggers login first,
-  // then shows the form after identity is established.
-  const handleLandingCreateAccount = useCallback(() => {
-    if (!isAuthenticated) {
-      // Mark intent so we show the form after login
-      setShowCreateAccount(true);
-      login();
-    } else {
-      setShowCreateAccount(true);
-    }
-  }, [isAuthenticated, login]);
+  // ─── Create account handler ───────────────────────────────────────────────
+
+  const handleCreateAccountSubmit = useCallback(
+    async (name: string, gmail: string, password?: string) => {
+      setIsSubmittingProfile(true);
+      await new Promise((r) => setTimeout(r, 600));
+
+      // Save locally always
+      const acct: LocalAccount = {
+        username: name,
+        gmail,
+        password: password ?? "",
+      };
+      saveAccount(acct);
+
+      // Also try backend
+      if (actor && !isActorFetching) {
+        try {
+          await actor.registerUserProfile?.(name, gmail);
+        } catch {
+          // Non-blocking — localStorage covers it
+        }
+      }
+
+      setSession(name, gmail);
+      setSessionState({ username: name, gmail });
+      setShowCreateAccount(false);
+      setIsSubmittingProfile(false);
+      toast.success(`Welcome to ${COMPANY_NAME}, ${name}!`, {
+        description: "Your account has been created successfully.",
+      });
+    },
+    [actor, isActorFetching],
+  );
+
+  // ─── Logout ───────────────────────────────────────────────────────────────
+
+  const handleLogout = useCallback(() => {
+    clearSession();
+    setSessionState(null);
+  }, []);
+
+  // ─── Toaster style ────────────────────────────────────────────────────────
+
+  const toasterStyle = {
+    background: "var(--nipw-surface)",
+    border: "1px solid var(--nipw-border)",
+    color: "var(--nipw-text-primary)",
+  };
 
   // ─── Render states ────────────────────────────────────────────────────────
-
-  // Global loading spinner while initializing or loading actor
-  if (isInitializing) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#0B1220" }}
-      >
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: "#16263E",
-              border: "1px solid #22324A",
-              color: "#F2F5FA",
-            },
-          }}
-        />
-        <div className="flex flex-col items-center gap-4">
-          <NIPWCrest size={64} />
-          <Loader2
-            className="w-8 h-8 animate-spin"
-            style={{ color: "#D4AF37" }}
-          />
-          <p className="text-sm font-mono" style={{ color: "#A9B4C6" }}>
-            Initializing secure session...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // Not authenticated: show landing page
   if (!isAuthenticated) {
     return (
       <>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: "#16263E",
-              border: "1px solid #22324A",
-              color: "#F2F5FA",
-            },
-          }}
-        />
+        <Toaster position="top-right" toastOptions={{ style: toasterStyle }} />
         <LandingPage
           onOpenLoginModal={() => setShowLoginModal(true)}
-          onCreateAccount={handleLandingCreateAccount}
+          onCreateAccount={() => setShowCreateAccount(true)}
           isLoggingIn={isLoggingIn}
         />
         <LoginModal
           open={showLoginModal}
           onOpenChange={setShowLoginModal}
-          onLogin={() => {
+          onLogin={handleLogin}
+          onCreateAccount={() => {
             setShowLoginModal(false);
-            login();
+            setShowCreateAccount(true);
           }}
-          onCreateAccount={handleLandingCreateAccount}
           isLoggingIn={isLoggingIn}
         />
-        <SupportChat />
-      </>
-    );
-  }
-
-  // Authenticated but profile still loading
-  if (
-    isAuthenticated &&
-    (profileLoading || (!profileLoaded && !showCreateAccount))
-  ) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#0B1220" }}
-      >
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: "#16263E",
-              border: "1px solid #22324A",
-              color: "#F2F5FA",
-            },
-          }}
-        />
-        <div className="flex flex-col items-center gap-4">
-          <NIPWCrest size={64} />
-          <Loader2
-            className="w-8 h-8 animate-spin"
-            style={{ color: "#D4AF37" }}
-          />
-          <p className="text-sm font-mono" style={{ color: "#A9B4C6" }}>
-            Loading your profile...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Authenticated but no profile yet (show create account modal over a loading screen)
-  if (isAuthenticated && showCreateAccount && !displayName) {
-    return (
-      <>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: "#16263E",
-              border: "1px solid #22324A",
-              color: "#F2F5FA",
-            },
-          }}
-        />
-        <div
-          className="min-h-screen flex items-center justify-center"
-          style={{ background: "#0B1220" }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "url('/assets/generated/dow-hero-bg.dim_1920x400.jpg')",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              opacity: 0.08,
-            }}
-          />
-          <div className="relative flex flex-col items-center gap-4 text-center px-4">
-            <NIPWCrest size={72} />
-            <h2
-              className="text-2xl font-bold font-display"
-              style={{ color: "#F2F5FA" }}
-            >
-              Complete Your Profile
-            </h2>
-            <p className="text-sm max-w-sm" style={{ color: "#A9B4C6" }}>
-              You&apos;re almost there! Enter your name and email to set up your{" "}
-              {COMPANY_NAME} account.
-            </p>
-          </div>
-        </div>
         <CreateAccountModal
           open={showCreateAccount}
-          onOpenChange={(v) => {
-            if (!v && !displayName) {
-              // If they dismiss without creating a profile, log them out
-              handleLogout();
-            } else {
-              setShowCreateAccount(v);
-            }
+          onOpenChange={setShowCreateAccount}
+          onSubmit={async (name, gmail, password) => {
+            await handleCreateAccountSubmit(name, gmail, password);
           }}
-          onSubmit={handleCreateAccountSubmit}
           isSubmitting={isSubmittingProfile}
         />
+        <SupportChat />
       </>
     );
   }
@@ -3279,19 +3617,10 @@ export default function App() {
   // Fully authenticated with profile
   return (
     <>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: "#16263E",
-            border: "1px solid #22324A",
-            color: "#F2F5FA",
-          },
-        }}
-      />
+      <Toaster position="top-right" toastOptions={{ style: toasterStyle }} />
       <Dashboard
-        displayName={displayName ?? "Investor"}
-        gmail={userGmail ?? ""}
+        displayName={session.username}
+        gmail={session.gmail}
         onLogout={handleLogout}
       />
     </>

@@ -39,32 +39,28 @@ export interface PlatformStats {
 }
 export type Time = bigint;
 export interface UserProfile { 'displayName' : string, 'gmail' : string }
-export type UserRole = { 'admin' : null } |
-  { 'user' : null } |
-  { 'guest' : null };
 export interface _SERVICE {
-  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addActivity' : ActorMethod<
     [number, ActivityType, string],
     { 'id' : bigint, 'timestamp' : Time }
   >,
-  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'getActivityById' : ActorMethod<[bigint], Activity>,
+  'getActivityById' : ActorMethod<[bigint], [] | [Activity]>,
   'getAllActivities' : ActorMethod<[], Array<Activity>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
-  'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getMarketPrices' : ActorMethod<[], MarketPrices>,
   'getPlatformStats' : ActorMethod<[], PlatformStats>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'incrementCommunityMemberCount' : ActorMethod<[], undefined>,
   'incrementInvestorCount' : ActorMethod<[], undefined>,
-  'isCallerAdmin' : ActorMethod<[], boolean>,
   'registerUserProfile' : ActorMethod<[string, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'updateActivityStatus' : ActorMethod<[bigint, ActivityStatus], Activity>,
+  'updateActivityStatus' : ActorMethod<
+    [bigint, ActivityStatus],
+    [] | [Activity]
+  >,
   'updateBitcoinAddress' : ActorMethod<[string], undefined>,
   'updateMarketPrices' : ActorMethod<[number, number], undefined>,
-  'updateMyUserProfile' : ActorMethod<[string, string], UserProfile>,
+  'updateMyUserProfile' : ActorMethod<[string, string], [] | [UserProfile]>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

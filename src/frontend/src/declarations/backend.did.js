@@ -15,11 +15,6 @@ export const ActivityType = IDL.Variant({
   'interestPayment' : IDL.Null,
 });
 export const Time = IDL.Int;
-export const UserRole = IDL.Variant({
-  'admin' : IDL.Null,
-  'user' : IDL.Null,
-  'guest' : IDL.Null,
-});
 export const ActivityStatus = IDL.Variant({
   'pending' : IDL.Null,
   'completed' : IDL.Null,
@@ -51,17 +46,14 @@ export const PlatformStats = IDL.Record({
 });
 
 export const idlService = IDL.Service({
-  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addActivity' : IDL.Func(
       [IDL.Float64, ActivityType, IDL.Text],
       [IDL.Record({ 'id' : IDL.Nat, 'timestamp' : Time })],
       [],
     ),
-  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'getActivityById' : IDL.Func([IDL.Nat], [Activity], ['query']),
+  'getActivityById' : IDL.Func([IDL.Nat], [IDL.Opt(Activity)], ['query']),
   'getAllActivities' : IDL.Func([], [IDL.Vec(Activity)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
-  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getMarketPrices' : IDL.Func([], [MarketPrices], ['query']),
   'getPlatformStats' : IDL.Func([], [PlatformStats], ['query']),
   'getUserProfile' : IDL.Func(
@@ -71,13 +63,20 @@ export const idlService = IDL.Service({
     ),
   'incrementCommunityMemberCount' : IDL.Func([], [], []),
   'incrementInvestorCount' : IDL.Func([], [], []),
-  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'registerUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'updateActivityStatus' : IDL.Func([IDL.Nat, ActivityStatus], [Activity], []),
+  'updateActivityStatus' : IDL.Func(
+      [IDL.Nat, ActivityStatus],
+      [IDL.Opt(Activity)],
+      [],
+    ),
   'updateBitcoinAddress' : IDL.Func([IDL.Text], [], []),
   'updateMarketPrices' : IDL.Func([IDL.Float64, IDL.Float64], [], []),
-  'updateMyUserProfile' : IDL.Func([IDL.Text, IDL.Text], [UserProfile], []),
+  'updateMyUserProfile' : IDL.Func(
+      [IDL.Text, IDL.Text],
+      [IDL.Opt(UserProfile)],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
@@ -90,11 +89,6 @@ export const idlFactory = ({ IDL }) => {
     'interestPayment' : IDL.Null,
   });
   const Time = IDL.Int;
-  const UserRole = IDL.Variant({
-    'admin' : IDL.Null,
-    'user' : IDL.Null,
-    'guest' : IDL.Null,
-  });
   const ActivityStatus = IDL.Variant({
     'pending' : IDL.Null,
     'completed' : IDL.Null,
@@ -126,17 +120,14 @@ export const idlFactory = ({ IDL }) => {
   });
   
   return IDL.Service({
-    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addActivity' : IDL.Func(
         [IDL.Float64, ActivityType, IDL.Text],
         [IDL.Record({ 'id' : IDL.Nat, 'timestamp' : Time })],
         [],
       ),
-    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'getActivityById' : IDL.Func([IDL.Nat], [Activity], ['query']),
+    'getActivityById' : IDL.Func([IDL.Nat], [IDL.Opt(Activity)], ['query']),
     'getAllActivities' : IDL.Func([], [IDL.Vec(Activity)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
-    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getMarketPrices' : IDL.Func([], [MarketPrices], ['query']),
     'getPlatformStats' : IDL.Func([], [PlatformStats], ['query']),
     'getUserProfile' : IDL.Func(
@@ -146,17 +137,20 @@ export const idlFactory = ({ IDL }) => {
       ),
     'incrementCommunityMemberCount' : IDL.Func([], [], []),
     'incrementInvestorCount' : IDL.Func([], [], []),
-    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'registerUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'updateActivityStatus' : IDL.Func(
         [IDL.Nat, ActivityStatus],
-        [Activity],
+        [IDL.Opt(Activity)],
         [],
       ),
     'updateBitcoinAddress' : IDL.Func([IDL.Text], [], []),
     'updateMarketPrices' : IDL.Func([IDL.Float64, IDL.Float64], [], []),
-    'updateMyUserProfile' : IDL.Func([IDL.Text, IDL.Text], [UserProfile], []),
+    'updateMyUserProfile' : IDL.Func(
+        [IDL.Text, IDL.Text],
+        [IDL.Opt(UserProfile)],
+        [],
+      ),
   });
 };
 

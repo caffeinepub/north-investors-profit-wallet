@@ -47,6 +47,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTheme } from "../contexts/ThemeContext";
+import type { Theme } from "../contexts/ThemeContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,24 +136,30 @@ function SectionHeader({
           style={{
             background: "rgba(212,175,55,0.12)",
             border: "1px solid rgba(212,175,55,0.3)",
-            color: "#D4AF37",
+            color: "var(--nipw-gold)",
           }}
         >
           {icon}
         </div>
         <h2
           className="text-lg font-bold font-display"
-          style={{ color: "#F2F5FA" }}
+          style={{ color: "var(--nipw-text-primary)" }}
         >
           {title}
         </h2>
       </div>
       {description && (
-        <p className="text-xs ml-12" style={{ color: "#8A95A8" }}>
+        <p
+          className="text-xs ml-12"
+          style={{ color: "var(--nipw-text-muted)" }}
+        >
           {description}
         </p>
       )}
-      <Separator className="mt-4" style={{ background: "#22324A" }} />
+      <Separator
+        className="mt-4"
+        style={{ background: "var(--nipw-border)" }}
+      />
     </div>
   );
 }
@@ -171,20 +179,23 @@ function SettingRow({
     <div
       className="flex items-center justify-between py-3 px-4 rounded-xl"
       style={{
-        background: "rgba(11,18,32,0.4)",
-        border: "1px solid rgba(34,50,74,0.7)",
+        background: "var(--nipw-row-bg)",
+        border: "1px solid var(--nipw-border-subtle)",
         marginBottom: "0.5rem",
       }}
     >
       <div className="flex-1 min-w-0 pr-4">
         <div
           className={`text-sm font-medium ${mono ? "font-mono" : ""}`}
-          style={{ color: "#F2F5FA" }}
+          style={{ color: "var(--nipw-text-primary)" }}
         >
           {label}
         </div>
         {description && (
-          <div className="text-xs mt-0.5" style={{ color: "#8A95A8" }}>
+          <div
+            className="text-xs mt-0.5"
+            style={{ color: "var(--nipw-text-muted)" }}
+          >
             {description}
           </div>
         )}
@@ -216,7 +227,10 @@ function AccountSection({
         label="Display Name"
         description="Your name shown across the platform"
       >
-        <span className="text-sm font-semibold" style={{ color: "#D4AF37" }}>
+        <span
+          className="text-sm font-semibold"
+          style={{ color: "var(--nipw-gold)" }}
+        >
           {displayName}
         </span>
       </SettingRow>
@@ -225,7 +239,10 @@ function AccountSection({
         label="Gmail Address"
         description="Email linked to your account"
       >
-        <span className="text-xs font-mono" style={{ color: "#A9B4C6" }}>
+        <span
+          className="text-xs font-mono"
+          style={{ color: "var(--nipw-text-secondary)" }}
+        >
           {gmail || "Not linked"}
         </span>
       </SettingRow>
@@ -266,7 +283,7 @@ function AccountSection({
         <Badge
           style={{
             background: "rgba(212,175,55,0.12)",
-            color: "#D4AF37",
+            color: "var(--nipw-gold)",
             border: "1px solid rgba(212,175,55,0.3)",
           }}
         >
@@ -275,7 +292,10 @@ function AccountSection({
       </SettingRow>
 
       <SettingRow label="Member Since" description="Account creation date">
-        <span className="text-sm" style={{ color: "#A9B4C6" }}>
+        <span
+          className="text-sm"
+          style={{ color: "var(--nipw-text-secondary)" }}
+        >
           2024
         </span>
       </SettingRow>
@@ -392,7 +412,7 @@ function SecuritySection() {
       <div className="mt-5 mb-3">
         <div
           className="text-xs font-mono uppercase tracking-widest mb-3"
-          style={{ color: "#A9B4C6" }}
+          style={{ color: "var(--nipw-text-secondary)" }}
         >
           Active Sessions
         </div>
@@ -402,8 +422,8 @@ function SecuritySection() {
               key={session.device}
               className="flex items-center gap-3 px-4 py-3 rounded-xl"
               style={{
-                background: "rgba(11,18,32,0.4)",
-                border: `1px solid ${session.current ? "rgba(46,204,113,0.3)" : "rgba(34,50,74,0.7)"}`,
+                background: "var(--nipw-row-bg)",
+                border: `1px solid ${session.current ? "rgba(46,204,113,0.3)" : "var(--nipw-border-subtle)"}`,
               }}
             >
               <div
@@ -411,8 +431,10 @@ function SecuritySection() {
                 style={{
                   background: session.current
                     ? "rgba(46,204,113,0.12)"
-                    : "rgba(34,50,74,0.8)",
-                  color: session.current ? "#2ECC71" : "#A9B4C6",
+                    : "var(--nipw-row-bg)",
+                  color: session.current
+                    ? "#2ECC71"
+                    : "var(--nipw-text-secondary)",
                 }}
               >
                 {session.icon}
@@ -420,11 +442,14 @@ function SecuritySection() {
               <div className="flex-1 min-w-0">
                 <div
                   className="text-sm font-medium"
-                  style={{ color: "#F2F5FA" }}
+                  style={{ color: "var(--nipw-text-primary)" }}
                 >
                   {session.device}
                 </div>
-                <div className="text-xs" style={{ color: "#8A95A8" }}>
+                <div
+                  className="text-xs"
+                  style={{ color: "var(--nipw-text-muted)" }}
+                >
                   {session.location} · {session.lastActive}
                 </div>
               </div>
@@ -470,7 +495,7 @@ function SecuritySection() {
       <div className="mt-6">
         <div
           className="text-xs font-mono uppercase tracking-widest mb-3"
-          style={{ color: "#A9B4C6" }}
+          style={{ color: "var(--nipw-text-secondary)" }}
         >
           Login History
         </div>
@@ -480,23 +505,26 @@ function SecuritySection() {
               key={entry.time}
               className="flex items-center justify-between px-4 py-3 rounded-xl"
               style={{
-                background: "rgba(11,18,32,0.4)",
-                border: "1px solid rgba(34,50,74,0.6)",
+                background: "var(--nipw-row-bg)",
+                border: "1px solid var(--nipw-border-subtle)",
               }}
             >
               <div className="flex items-center gap-3">
                 <Clock
                   className="w-4 h-4 flex-shrink-0"
-                  style={{ color: "#A9B4C6" }}
+                  style={{ color: "var(--nipw-text-secondary)" }}
                 />
                 <div>
                   <div
                     className="text-xs font-medium"
-                    style={{ color: "#F2F5FA" }}
+                    style={{ color: "var(--nipw-text-primary)" }}
                   >
                     {entry.time}
                   </div>
-                  <div className="text-xs" style={{ color: "#8A95A8" }}>
+                  <div
+                    className="text-xs"
+                    style={{ color: "var(--nipw-text-muted)" }}
+                  >
                     {entry.location}
                   </div>
                 </div>
@@ -677,13 +705,16 @@ function PrivacySection() {
           style={{
             background:
               profileVisibility === "Private"
-                ? "rgba(34,50,74,0.8)"
+                ? "var(--nipw-row-bg)"
                 : "rgba(46,204,113,0.12)",
             border:
               profileVisibility === "Private"
-                ? "1px solid #22324A"
+                ? "1px solid var(--nipw-border)"
                 : "1px solid rgba(46,204,113,0.3)",
-            color: profileVisibility === "Private" ? "#A9B4C6" : "#2ECC71",
+            color:
+              profileVisibility === "Private"
+                ? "var(--nipw-text-secondary)"
+                : "#2ECC71",
           }}
           type="button"
           data-ocid="settings.profile_visibility.toggle"
@@ -747,14 +778,14 @@ function BlockchainSection({
       <div className="mb-3">
         <div
           className="text-xs font-mono uppercase tracking-widest mb-2"
-          style={{ color: "#8A95A8" }}
+          style={{ color: "var(--nipw-text-muted)" }}
         >
           Bitcoin (BTC) Wallet
         </div>
         <div
           className="px-4 py-3 rounded-xl"
           style={{
-            background: "rgba(11,18,32,0.4)",
+            background: "var(--nipw-row-bg)",
             border: "1px solid rgba(212,175,55,0.25)",
           }}
         >
@@ -764,7 +795,7 @@ function BlockchainSection({
                 <Badge
                   style={{
                     background: "rgba(212,175,55,0.12)",
-                    color: "#D4AF37",
+                    color: "var(--nipw-gold)",
                     border: "1px solid rgba(212,175,55,0.3)",
                     fontSize: "10px",
                   }}
@@ -774,7 +805,7 @@ function BlockchainSection({
               </div>
               <div
                 className="font-mono text-xs break-all leading-relaxed"
-                style={{ color: "#D4AF37" }}
+                style={{ color: "var(--nipw-gold)" }}
               >
                 {btcAddress}
               </div>
@@ -785,7 +816,7 @@ function BlockchainSection({
               style={{
                 background: "rgba(212,175,55,0.1)",
                 border: "1px solid rgba(212,175,55,0.2)",
-                color: "#D4AF37",
+                color: "var(--nipw-gold)",
               }}
               type="button"
               data-ocid="settings.btc_address.button"
@@ -800,14 +831,14 @@ function BlockchainSection({
       <div className="mb-4">
         <div
           className="text-xs font-mono uppercase tracking-widest mb-2"
-          style={{ color: "#8A95A8" }}
+          style={{ color: "var(--nipw-text-muted)" }}
         >
           USDT (TRC-20) Wallet
         </div>
         <div
           className="px-4 py-3 rounded-xl"
           style={{
-            background: "rgba(11,18,32,0.4)",
+            background: "var(--nipw-row-bg)",
             border: "1px solid rgba(46,204,113,0.25)",
           }}
         >
@@ -853,7 +884,7 @@ function BlockchainSection({
       <div className="mb-4">
         <div
           className="text-xs font-mono uppercase tracking-widest mb-3"
-          style={{ color: "#8A95A8" }}
+          style={{ color: "var(--nipw-text-muted)" }}
         >
           Transaction Fee Preference
         </div>
@@ -867,11 +898,11 @@ function BlockchainSection({
                 background:
                   feePreference === tier
                     ? "rgba(212,175,55,0.12)"
-                    : "rgba(11,18,32,0.4)",
+                    : "var(--nipw-row-bg)",
                 border:
                   feePreference === tier
                     ? "1px solid rgba(212,175,55,0.4)"
-                    : "1px solid rgba(34,50,74,0.7)",
+                    : "1px solid var(--nipw-border)",
               }}
               type="button"
               data-ocid={`settings.fee_${tier.toLowerCase()}.toggle`}
@@ -881,21 +912,30 @@ function BlockchainSection({
                   <Clock
                     className="w-4 h-4"
                     style={{
-                      color: feePreference === tier ? "#D4AF37" : "#A9B4C6",
+                      color:
+                        feePreference === tier
+                          ? "var(--nipw-gold)"
+                          : "var(--nipw-text-secondary)",
                     }}
                   />
                 ) : tier === "Fast" ? (
                   <Zap
                     className="w-4 h-4"
                     style={{
-                      color: feePreference === tier ? "#D4AF37" : "#A9B4C6",
+                      color:
+                        feePreference === tier
+                          ? "var(--nipw-gold)"
+                          : "var(--nipw-text-secondary)",
                     }}
                   />
                 ) : (
                   <RefreshCw
                     className="w-4 h-4"
                     style={{
-                      color: feePreference === tier ? "#D4AF37" : "#A9B4C6",
+                      color:
+                        feePreference === tier
+                          ? "var(--nipw-gold)"
+                          : "var(--nipw-text-secondary)",
                     }}
                   />
                 )}
@@ -903,7 +943,10 @@ function BlockchainSection({
               <div
                 className="text-xs font-semibold"
                 style={{
-                  color: feePreference === tier ? "#D4AF37" : "#F2F5FA",
+                  color:
+                    feePreference === tier
+                      ? "var(--nipw-gold)"
+                      : "var(--nipw-text-primary)",
                 }}
               >
                 {tier}
@@ -911,14 +954,17 @@ function BlockchainSection({
               <div
                 className="text-xs font-mono mt-0.5"
                 style={{
-                  color: feePreference === tier ? "#D4AF37" : "#8A95A8",
+                  color:
+                    feePreference === tier
+                      ? "var(--nipw-gold)"
+                      : "var(--nipw-text-muted)",
                 }}
               >
                 {fees[tier].display}
               </div>
               <div
                 className="text-xs mt-0.5"
-                style={{ color: "#8A95A8", fontSize: "10px" }}
+                style={{ color: "var(--nipw-text-muted)", fontSize: "10px" }}
               >
                 {fees[tier].time}
               </div>
@@ -944,18 +990,21 @@ function BlockchainSection({
         <div className="grid grid-cols-3 gap-3">
           {Object.entries(fees).map(([tier, val]) => (
             <div key={tier} className="text-center">
-              <div className="text-xs" style={{ color: "#8A95A8" }}>
+              <div
+                className="text-xs"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
                 {tier}
               </div>
               <div
                 className="text-sm font-semibold font-mono"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 {val.display}
               </div>
               <div
                 className="text-xs"
-                style={{ color: "#8A95A8", fontSize: "10px" }}
+                style={{ color: "var(--nipw-text-muted)", fontSize: "10px" }}
               >
                 {val.time}
               </div>
@@ -974,11 +1023,14 @@ function BlockchainSection({
       >
         <div
           className="text-xs font-semibold mb-2"
-          style={{ color: "#F2F5FA" }}
+          style={{ color: "var(--nipw-text-primary)" }}
         >
           Web3.js ETH Wallet Generator
         </div>
-        <p className="text-xs mb-3" style={{ color: "#A9B4C6" }}>
+        <p
+          className="text-xs mb-3"
+          style={{ color: "var(--nipw-text-secondary)" }}
+        >
           Generate a new Ethereum wallet address using Web3.js directly in your
           browser.
         </p>
@@ -1008,7 +1060,7 @@ function BlockchainSection({
           className="w-full py-2 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
           style={{
             background: "linear-gradient(135deg, #1E4FD7 0%, #2F6BFF 100%)",
-            color: "#F2F5FA",
+            color: "var(--nipw-text-primary)",
           }}
           data-ocid="settings.generate_eth_wallet.button"
         >
@@ -1019,11 +1071,14 @@ function BlockchainSection({
             <div
               className="rounded p-2"
               style={{
-                background: "rgba(11,18,32,0.7)",
-                border: "1px solid #22324A",
+                background: "var(--nipw-input-bg)",
+                border: "1px solid var(--nipw-border)",
               }}
             >
-              <div className="text-xs font-mono" style={{ color: "#A9B4C6" }}>
+              <div
+                className="text-xs font-mono"
+                style={{ color: "var(--nipw-text-secondary)" }}
+              >
                 Address:
               </div>
               <div
@@ -1045,7 +1100,7 @@ function BlockchainSection({
               </div>
               <div
                 className="text-xs font-mono break-all"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 {generatedEthWallet.privateKey}
               </div>
@@ -1075,9 +1130,9 @@ function BlockchainSection({
         <DialogContent
           className="sm:max-w-md"
           style={{
-            background: "linear-gradient(135deg, #0F1A2B 0%, #16263E 100%)",
+            background: "var(--nipw-surface)",
             border: "1px solid rgba(231,76,60,0.4)",
-            color: "#F2F5FA",
+            color: "var(--nipw-text-primary)",
           }}
           data-ocid="settings.export_wallet.dialog"
         >
@@ -1114,13 +1169,13 @@ function BlockchainSection({
               checked={exportConfirmed}
               onChange={(e) => setExportConfirmed(e.target.checked)}
               className="mt-0.5 rounded"
-              style={{ accentColor: "#D4AF37" }}
+              style={{ accentColor: "var(--nipw-gold)" }}
               data-ocid="settings.export_confirm.checkbox"
             />
             <Label
               htmlFor="export-confirm"
               className="text-sm cursor-pointer"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               I understand the risks. I will keep this key secure and never
               share it with anyone.
@@ -1135,7 +1190,7 @@ function BlockchainSection({
                 style={{
                   background: "rgba(212,175,55,0.1)",
                   border: "1px solid rgba(212,175,55,0.3)",
-                  color: "#D4AF37",
+                  color: "var(--nipw-gold)",
                 }}
                 type="button"
               >
@@ -1150,7 +1205,7 @@ function BlockchainSection({
                 <div
                   className="rounded-xl p-3 font-mono text-xs break-all"
                   style={{
-                    background: "rgba(11,18,32,0.8)",
+                    background: "var(--nipw-surface-deep, rgba(11,18,32,0.8))",
                     border: "1px solid rgba(231,76,60,0.3)",
                     color: "#E74C3C",
                   }}
@@ -1158,7 +1213,12 @@ function BlockchainSection({
                 >
                   ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
                   <br />
-                  <span style={{ color: "#8A95A8", fontSize: "10px" }}>
+                  <span
+                    style={{
+                      color: "var(--nipw-text-muted)",
+                      fontSize: "10px",
+                    }}
+                  >
                     [Private key not accessible — contact support for secure key
                     export]
                   </span>
@@ -1178,8 +1238,8 @@ function BlockchainSection({
               }}
               style={{
                 background: "transparent",
-                border: "1px solid #22324A",
-                color: "#A9B4C6",
+                border: "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-secondary)",
               }}
               data-ocid="settings.export_wallet.cancel_button"
             >
@@ -1262,10 +1322,13 @@ function CoinbaseSection() {
           C
         </div>
         <div>
-          <div className="text-base font-bold" style={{ color: "#F2F5FA" }}>
+          <div
+            className="text-base font-bold"
+            style={{ color: "var(--nipw-text-primary)" }}
+          >
             Coinbase
           </div>
-          <div className="text-xs" style={{ color: "#8A95A8" }}>
+          <div className="text-xs" style={{ color: "var(--nipw-text-muted)" }}>
             America&apos;s most trusted crypto exchange
           </div>
         </div>
@@ -1289,7 +1352,7 @@ function CoinbaseSection() {
         <>
           <p
             className="text-sm leading-relaxed mb-5 px-1"
-            style={{ color: "#A9B4C6" }}
+            style={{ color: "var(--nipw-text-secondary)" }}
           >
             Connect your Coinbase account to sync your portfolio automatically,
             enable real-time price feeds, and allow instant transfers between
@@ -1315,16 +1378,19 @@ function CoinbaseSection() {
             <div
               className="px-4 py-3 rounded-xl"
               style={{
-                background: "rgba(11,18,32,0.4)",
-                border: "1px solid rgba(34,50,74,0.7)",
+                background: "var(--nipw-row-bg)",
+                border: "1px solid var(--nipw-border)",
               }}
             >
-              <div className="text-xs mb-1" style={{ color: "#8A95A8" }}>
+              <div
+                className="text-xs mb-1"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
                 Last Synced
               </div>
               <div
                 className="text-sm font-semibold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 2 minutes ago
               </div>
@@ -1332,11 +1398,14 @@ function CoinbaseSection() {
             <div
               className="px-4 py-3 rounded-xl"
               style={{
-                background: "rgba(11,18,32,0.4)",
-                border: "1px solid rgba(34,50,74,0.7)",
+                background: "var(--nipw-row-bg)",
+                border: "1px solid var(--nipw-border)",
               }}
             >
-              <div className="text-xs mb-1" style={{ color: "#8A95A8" }}>
+              <div
+                className="text-xs mb-1"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
                 Status
               </div>
               <div
@@ -1351,13 +1420,13 @@ function CoinbaseSection() {
           <div
             className="px-4 py-4 rounded-xl mb-4"
             style={{
-              background: "rgba(11,18,32,0.4)",
-              border: "1px solid rgba(34,50,74,0.6)",
+              background: "var(--nipw-row-bg)",
+              border: "1px solid var(--nipw-border-subtle)",
             }}
           >
             <div
               className="text-xs font-mono uppercase tracking-widest mb-3"
-              style={{ color: "#A9B4C6" }}
+              style={{ color: "var(--nipw-text-secondary)" }}
             >
               Active Features
             </div>
@@ -1373,7 +1442,10 @@ function CoinbaseSection() {
                     className="w-3.5 h-3.5 flex-shrink-0"
                     style={{ color: "#2ECC71" }}
                   />
-                  <span className="text-sm" style={{ color: "#F2F5FA" }}>
+                  <span
+                    className="text-sm"
+                    style={{ color: "var(--nipw-text-primary)" }}
+                  >
                     {feature}
                   </span>
                 </div>
@@ -1422,16 +1494,16 @@ function CoinbaseSection() {
         <DialogContent
           className="sm:max-w-md"
           style={{
-            background: "linear-gradient(135deg, #0F1A2B 0%, #16263E 100%)",
+            background: "var(--nipw-surface)",
             border: "1px solid rgba(4,113,215,0.3)",
-            color: "#F2F5FA",
+            color: "var(--nipw-text-primary)",
           }}
           data-ocid="settings.coinbase_connect.dialog"
         >
           <DialogHeader>
             <DialogTitle
               className="flex items-center gap-2"
-              style={{ color: "#F2F5FA" }}
+              style={{ color: "var(--nipw-text-primary)" }}
             >
               <div
                 className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold"
@@ -1447,7 +1519,7 @@ function CoinbaseSection() {
             <div className="space-y-1.5">
               <Label
                 className="text-xs font-medium"
-                style={{ color: "#A9B4C6" }}
+                style={{ color: "var(--nipw-text-secondary)" }}
               >
                 API Key
               </Label>
@@ -1457,9 +1529,9 @@ function CoinbaseSection() {
                 placeholder="Enter your Coinbase API key"
                 disabled={connecting}
                 style={{
-                  background: "rgba(11,18,32,0.7)",
-                  border: "1px solid #22324A",
-                  color: "#F2F5FA",
+                  background: "var(--nipw-input-bg)",
+                  border: "1px solid var(--nipw-border)",
+                  color: "var(--nipw-text-primary)",
                 }}
                 data-ocid="settings.coinbase_api_key.input"
               />
@@ -1467,7 +1539,7 @@ function CoinbaseSection() {
             <div className="space-y-1.5">
               <Label
                 className="text-xs font-medium"
-                style={{ color: "#A9B4C6" }}
+                style={{ color: "var(--nipw-text-secondary)" }}
               >
                 API Secret
               </Label>
@@ -1478,9 +1550,9 @@ function CoinbaseSection() {
                 placeholder="Enter your Coinbase API secret"
                 disabled={connecting}
                 style={{
-                  background: "rgba(11,18,32,0.7)",
-                  border: "1px solid #22324A",
-                  color: "#F2F5FA",
+                  background: "var(--nipw-input-bg)",
+                  border: "1px solid var(--nipw-border)",
+                  color: "var(--nipw-text-primary)",
                 }}
                 data-ocid="settings.coinbase_api_secret.input"
               />
@@ -1494,7 +1566,7 @@ function CoinbaseSection() {
             >
               <p
                 className="text-xs leading-relaxed"
-                style={{ color: "#A9B4C6" }}
+                style={{ color: "var(--nipw-text-secondary)" }}
               >
                 <span style={{ color: "#2F6BFF" }} className="font-semibold">
                   Secure:{" "}
@@ -1511,8 +1583,8 @@ function CoinbaseSection() {
                 disabled={connecting}
                 style={{
                   background: "transparent",
-                  border: "1px solid #22324A",
-                  color: "#A9B4C6",
+                  border: "1px solid var(--nipw-border)",
+                  color: "var(--nipw-text-secondary)",
                 }}
                 data-ocid="settings.coinbase_connect.cancel_button"
               >
@@ -1547,6 +1619,33 @@ function CoinbaseSection() {
 
 function AppearanceSection() {
   const [currency, setCurrency] = useState("USD");
+  const { theme, setTheme } = useTheme();
+
+  const themeOptions: {
+    id: Theme;
+    label: string;
+    icon: string;
+    desc: string;
+  }[] = [
+    { id: "dark", label: "Dark", icon: "🌙", desc: "Dark navy theme" },
+    { id: "light", label: "Light", icon: "☀️", desc: "Clean white theme" },
+    { id: "auto", label: "Auto", icon: "💻", desc: "Follow system" },
+  ];
+
+  const handleThemeChange = (t: Theme) => {
+    setTheme(t);
+    const labels: Record<Theme, string> = {
+      dark: "Dark theme activated",
+      light: "Light theme activated",
+      auto: "Theme set to follow your system preference",
+    };
+    toast(labels[t], {
+      description:
+        t === "auto"
+          ? "The app will match your device's display settings."
+          : "Your display preference has been saved.",
+    });
+  };
 
   return (
     <div data-ocid="settings.appearance.section">
@@ -1560,52 +1659,66 @@ function AppearanceSection() {
       <div className="mb-5">
         <div
           className="text-xs font-mono uppercase tracking-widest mb-3"
-          style={{ color: "#8A95A8" }}
+          style={{ color: "var(--nipw-text-muted)" }}
         >
           Theme
         </div>
         <div className="grid grid-cols-3 gap-3">
-          {[
-            { id: "dark", label: "Dark", icon: "🌙", active: true },
-            { id: "light", label: "Light", icon: "☀️", active: false },
-            { id: "auto", label: "Auto", icon: "💻", active: false },
-          ].map((theme) => (
-            <div
-              key={theme.id}
-              className="relative flex flex-col items-center p-4 rounded-xl cursor-pointer transition-all hover:brightness-110"
-              style={{
-                background: theme.active
-                  ? "rgba(212,175,55,0.12)"
-                  : "rgba(11,18,32,0.4)",
-                border: theme.active
-                  ? "1px solid rgba(212,175,55,0.4)"
-                  : "1px solid rgba(34,50,74,0.7)",
-              }}
-              data-ocid={`settings.theme_${theme.id}.toggle`}
-            >
-              <span className="text-2xl mb-2">{theme.icon}</span>
-              <span
-                className="text-xs font-semibold"
-                style={{ color: theme.active ? "#D4AF37" : "#F2F5FA" }}
+          {themeOptions.map((t) => {
+            const active = theme === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => handleThemeChange(t.id)}
+                className="relative flex flex-col items-center p-4 rounded-xl transition-all hover:brightness-110 active:scale-95"
+                style={{
+                  background: active
+                    ? "rgba(212,175,55,0.12)"
+                    : "var(--nipw-row-bg)",
+                  border: active
+                    ? "1px solid rgba(212,175,55,0.4)"
+                    : "1px solid var(--nipw-border)",
+                  cursor: "pointer",
+                }}
+                data-ocid={`settings.theme_${t.id}.toggle`}
+                aria-label={`Switch to ${t.label} theme`}
+                aria-pressed={active}
               >
-                {theme.label}
-              </span>
-              {!theme.active && (
-                <Badge
-                  className="absolute top-1.5 right-1.5"
+                <span className="text-2xl mb-2">{t.icon}</span>
+                <span
+                  className="text-xs font-semibold"
                   style={{
-                    background: "rgba(34,50,74,0.9)",
-                    color: "#8A95A8",
-                    border: "1px solid #22324A",
-                    fontSize: "9px",
-                    padding: "1px 5px",
+                    color: active
+                      ? "var(--nipw-gold)"
+                      : "var(--nipw-text-primary)",
                   }}
                 >
-                  Soon
-                </Badge>
-              )}
-            </div>
-          ))}
+                  {t.label}
+                </span>
+                <span
+                  className="text-xs mt-0.5"
+                  style={{
+                    color: active
+                      ? "var(--nipw-gold)"
+                      : "var(--nipw-text-muted)",
+                    fontSize: "9px",
+                  }}
+                >
+                  {t.desc}
+                </span>
+                {active && (
+                  <div
+                    className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                    style={{
+                      background: "var(--nipw-gold)",
+                      boxShadow: "0 0 4px #D4AF37",
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -1624,12 +1737,15 @@ function AppearanceSection() {
                 background:
                   currency === c
                     ? "rgba(212,175,55,0.15)"
-                    : "rgba(34,50,74,0.6)",
+                    : "var(--nipw-row-bg)",
                 border:
                   currency === c
                     ? "1px solid rgba(212,175,55,0.4)"
-                    : "1px solid #22324A",
-                color: currency === c ? "#D4AF37" : "#A9B4C6",
+                    : "1px solid var(--nipw-border)",
+                color:
+                  currency === c
+                    ? "var(--nipw-gold)"
+                    : "var(--nipw-text-secondary)",
               }}
               type="button"
               data-ocid={`settings.currency_${c.toLowerCase()}.toggle`}
@@ -1643,14 +1759,17 @@ function AppearanceSection() {
       {/* Language */}
       <SettingRow label="Language" description="Platform display language">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold" style={{ color: "#F2F5FA" }}>
+          <span
+            className="text-sm font-semibold"
+            style={{ color: "var(--nipw-text-primary)" }}
+          >
             English
           </span>
           <Badge
             style={{
-              background: "rgba(34,50,74,0.8)",
-              color: "#8A95A8",
-              border: "1px solid #22324A",
+              background: "var(--nipw-row-bg)",
+              color: "var(--nipw-text-muted)",
+              border: "1px solid var(--nipw-border)",
               fontSize: "10px",
             }}
           >
@@ -1689,7 +1808,7 @@ function AboutSection({
       <div
         className="px-5 py-5 rounded-xl mb-4"
         style={{
-          background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
+          background: "var(--nipw-surface)",
           border: "1px solid rgba(212,175,55,0.25)",
         }}
       >
@@ -1698,7 +1817,7 @@ function AboutSection({
             className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0"
             style={{
               background: "linear-gradient(135deg, #D4AF37 0%, #B8962E 100%)",
-              color: "#0B1220",
+              color: "var(--nipw-bg)",
             }}
           >
             N
@@ -1706,11 +1825,14 @@ function AboutSection({
           <div>
             <div
               className="text-base font-bold font-display"
-              style={{ color: "#F2F5FA" }}
+              style={{ color: "var(--nipw-text-primary)" }}
             >
               North Investors Profit Wallet
             </div>
-            <div className="text-xs font-mono" style={{ color: "#D4AF37" }}>
+            <div
+              className="text-xs font-mono"
+              style={{ color: "var(--nipw-gold)" }}
+            >
               NIPW
             </div>
           </div>
@@ -1727,16 +1849,19 @@ function AboutSection({
               key={item.label}
               className="px-3 py-2 rounded-lg"
               style={{
-                background: "rgba(11,18,32,0.5)",
-                border: "1px solid #22324A",
+                background: "var(--nipw-row-bg)",
+                border: "1px solid var(--nipw-border)",
               }}
             >
-              <div className="text-xs" style={{ color: "#8A95A8" }}>
+              <div
+                className="text-xs"
+                style={{ color: "var(--nipw-text-muted)" }}
+              >
                 {item.label}
               </div>
               <div
                 className="text-sm font-semibold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 {item.value}
               </div>
@@ -1749,8 +1874,8 @@ function AboutSection({
       <div
         className="flex items-center gap-4 px-4 py-3 rounded-xl mb-4"
         style={{
-          background: "rgba(11,18,32,0.4)",
-          border: "1px solid rgba(34,50,74,0.7)",
+          background: "var(--nipw-row-bg)",
+          border: "1px solid var(--nipw-border)",
         }}
       >
         <div
@@ -1760,16 +1885,16 @@ function AboutSection({
             border: "1px solid rgba(212,175,55,0.3)",
           }}
         >
-          <Phone className="w-4 h-4" style={{ color: "#D4AF37" }} />
+          <Phone className="w-4 h-4" style={{ color: "var(--nipw-gold)" }} />
         </div>
         <div>
-          <div className="text-xs" style={{ color: "#8A95A8" }}>
+          <div className="text-xs" style={{ color: "var(--nipw-text-muted)" }}>
             Support Phone
           </div>
           <a
             href="tel:+12742015975"
             className="text-sm font-semibold hover:text-white transition-colors"
-            style={{ color: "#D4AF37" }}
+            style={{ color: "var(--nipw-gold)" }}
           >
             1 (274) 201-5975
           </a>
@@ -1784,9 +1909,9 @@ function AboutSection({
             onClick={() => handleDocLink(doc)}
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm text-left transition-all hover:brightness-110"
             style={{
-              background: "rgba(11,18,32,0.4)",
-              border: "1px solid rgba(34,50,74,0.7)",
-              color: "#A9B4C6",
+              background: "var(--nipw-row-bg)",
+              border: "1px solid var(--nipw-border)",
+              color: "var(--nipw-text-secondary)",
             }}
             type="button"
             data-ocid={`settings.${doc.toLowerCase().replace(/ /g, "_")}.button`}
@@ -1808,7 +1933,7 @@ function AboutSection({
         }}
         style={{
           background: "linear-gradient(135deg, #1E4FD7 0%, #2F6BFF 100%)",
-          color: "#F2F5FA",
+          color: "var(--nipw-text-primary)",
           border: "none",
           boxShadow: "0 2px 8px rgba(47,107,255,0.3)",
         }}
@@ -1871,9 +1996,9 @@ export function SettingsPanel({
         style={{
           width: "min(640px, 100vw)",
           maxWidth: "100vw",
-          background: "#0B1220",
+          background: "var(--nipw-bg)",
           border: "none",
-          borderLeft: "1px solid #22324A",
+          borderLeft: "1px solid var(--nipw-border)",
         }}
         data-ocid="settings.sheet"
       >
@@ -1881,8 +2006,8 @@ export function SettingsPanel({
         <SheetHeader
           className="px-6 py-4 flex-shrink-0"
           style={{
-            background: "rgba(11,18,32,0.98)",
-            borderBottom: "1px solid #22324A",
+            background: "var(--nipw-nav-bg)",
+            borderBottom: "1px solid var(--nipw-border)",
           }}
         >
           <div className="flex items-center justify-between">
@@ -1894,11 +2019,14 @@ export function SettingsPanel({
                   border: "1px solid rgba(212,175,55,0.3)",
                 }}
               >
-                <Settings className="w-4 h-4" style={{ color: "#D4AF37" }} />
+                <Settings
+                  className="w-4 h-4"
+                  style={{ color: "var(--nipw-gold)" }}
+                />
               </div>
               <SheetTitle
                 className="text-base font-bold"
-                style={{ color: "#F2F5FA" }}
+                style={{ color: "var(--nipw-text-primary)" }}
               >
                 Settings
               </SheetTitle>
@@ -1907,9 +2035,9 @@ export function SettingsPanel({
               onClick={() => onOpenChange(false)}
               className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:brightness-110"
               style={{
-                background: "rgba(34,50,74,0.8)",
-                border: "1px solid #22324A",
-                color: "#A9B4C6",
+                background: "var(--nipw-row-bg)",
+                border: "1px solid var(--nipw-border)",
+                color: "var(--nipw-text-secondary)",
               }}
               type="button"
               data-ocid="settings.close_button"
@@ -1925,8 +2053,8 @@ export function SettingsPanel({
           <div
             className="hidden sm:flex flex-col w-52 flex-shrink-0 overflow-y-auto py-4"
             style={{
-              background: "rgba(9,14,26,0.8)",
-              borderRight: "1px solid #22324A",
+              background: "var(--nipw-overlay-bg)",
+              borderRight: "1px solid var(--nipw-border)",
             }}
           >
             {NAV_ITEMS.map((item) => (
@@ -1943,14 +2071,20 @@ export function SettingsPanel({
                     activeSection === item.id
                       ? "1px solid rgba(212,175,55,0.2)"
                       : "1px solid transparent",
-                  color: activeSection === item.id ? "#D4AF37" : "#A9B4C6",
+                  color:
+                    activeSection === item.id
+                      ? "var(--nipw-gold)"
+                      : "var(--nipw-text-secondary)",
                 }}
                 type="button"
                 data-ocid={`settings.nav_${item.id}.link`}
               >
                 <span
                   style={{
-                    color: activeSection === item.id ? "#D4AF37" : "#8A95A8",
+                    color:
+                      activeSection === item.id
+                        ? "var(--nipw-gold)"
+                        : "var(--nipw-text-muted)",
                   }}
                 >
                   {item.icon}
@@ -1964,8 +2098,8 @@ export function SettingsPanel({
           <div
             className="flex sm:hidden overflow-x-auto flex-shrink-0 absolute top-[65px] left-0 right-0 z-10"
             style={{
-              background: "rgba(9,14,26,0.98)",
-              borderBottom: "1px solid #22324A",
+              background: "var(--nipw-overlay-bg)",
+              borderBottom: "1px solid var(--nipw-border)",
             }}
           >
             {NAV_ITEMS.map((item) => (
@@ -1974,7 +2108,10 @@ export function SettingsPanel({
                 onClick={() => setActiveSection(item.id)}
                 className="flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-all"
                 style={{
-                  color: activeSection === item.id ? "#D4AF37" : "#8A95A8",
+                  color:
+                    activeSection === item.id
+                      ? "var(--nipw-gold)"
+                      : "var(--nipw-text-muted)",
                   borderBottom:
                     activeSection === item.id
                       ? "2px solid #D4AF37"

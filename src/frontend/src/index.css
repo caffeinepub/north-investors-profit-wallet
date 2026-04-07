@@ -50,6 +50,90 @@
     --sidebar-accent-foreground: 0.963 0.008 240;
     --sidebar-border: 0.235 0.04 240;
     --sidebar-ring: 0.76 0.14 85;
+
+    /* ── NIPW semantic color tokens (dark defaults) ── */
+    --nipw-bg: #0b1220;
+    --nipw-bg-secondary: #0f1a2b;
+    --nipw-surface: #121f33;
+    --nipw-surface-alt: #16263e;
+    --nipw-surface-deep: #0d1625;
+    --nipw-border: #22324a;
+    --nipw-border-subtle: rgba(34, 50, 74, 0.7);
+    --nipw-text-primary: #f2f5fa;
+    --nipw-text-secondary: #a9b4c6;
+    --nipw-text-muted: #8a95a8;
+    --nipw-nav-bg: rgba(11, 18, 32, 0.95);
+    --nipw-nav-border: #22324a;
+    --nipw-card-bg: linear-gradient(135deg, #121f33 0%, #16263e 100%);
+    --nipw-input-bg: rgba(11, 18, 32, 0.7);
+    --nipw-row-bg: rgba(11, 18, 32, 0.4);
+    --nipw-overlay-bg: rgba(9, 14, 26, 0.8);
+    --nipw-hero-bg: linear-gradient(180deg, #0f1a2b 0%, #0b1220 100%);
+    --nipw-footer-bg: rgba(9, 14, 26, 0.95);
+    --nipw-scrollbar-track: #0b1220;
+    --nipw-scrollbar-thumb: #22324a;
+    /* Gold accent — constant across themes */
+    --nipw-gold: #d4af37;
+    --nipw-gold-dim: #b8962e;
+    --nipw-green: #2ecc71;
+    --nipw-blue: #2f6bff;
+    --nipw-red: #e74c3c;
+  }
+
+  /* ── Light Theme overrides ── */
+  html.light {
+    color-scheme: light;
+
+    --background: 0.98 0.005 240;
+    --foreground: 0.135 0.025 240;
+    --card: 0.97 0.008 240;
+    --card-foreground: 0.135 0.025 240;
+    --popover: 0.97 0.008 240;
+    --popover-foreground: 0.135 0.025 240;
+    --primary: 0.76 0.14 85;
+    --primary-foreground: 0.135 0.025 240;
+    --secondary: 0.93 0.015 240;
+    --secondary-foreground: 0.135 0.025 240;
+    --muted: 0.95 0.01 240;
+    --muted-foreground: 0.45 0.04 240;
+    --accent: 0.52 0.22 265;
+    --accent-foreground: 0.97 0.005 240;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.88 0.02 240;
+    --input: 0.88 0.02 240;
+    --ring: 0.76 0.14 85;
+
+    --sidebar: 0.96 0.008 240;
+    --sidebar-foreground: 0.135 0.025 240;
+    --sidebar-primary: 0.76 0.14 85;
+    --sidebar-primary-foreground: 0.135 0.025 240;
+    --sidebar-accent: 0.93 0.015 240;
+    --sidebar-accent-foreground: 0.135 0.025 240;
+    --sidebar-border: 0.88 0.02 240;
+    --sidebar-ring: 0.76 0.14 85;
+
+    /* NIPW semantic color tokens (light overrides) */
+    --nipw-bg: #f8f9fa;
+    --nipw-bg-secondary: #ffffff;
+    --nipw-surface: #ffffff;
+    --nipw-surface-alt: #f0f2f5;
+    --nipw-surface-deep: #e8ebf0;
+    --nipw-border: #cbd5e0;
+    --nipw-border-subtle: rgba(203, 213, 224, 0.8);
+    --nipw-text-primary: #0b1220;
+    --nipw-text-secondary: #4a5568;
+    --nipw-text-muted: #718096;
+    --nipw-nav-bg: rgba(255, 255, 255, 0.95);
+    --nipw-nav-border: #cbd5e0;
+    --nipw-card-bg: linear-gradient(135deg, #ffffff 0%, #f7f9fc 100%);
+    --nipw-input-bg: rgba(255, 255, 255, 0.9);
+    --nipw-row-bg: rgba(240, 242, 245, 0.8);
+    --nipw-overlay-bg: rgba(255, 255, 255, 0.95);
+    --nipw-hero-bg: linear-gradient(180deg, #eef1f5 0%, #f8f9fa 100%);
+    --nipw-footer-bg: rgba(240, 242, 245, 0.98);
+    --nipw-scrollbar-track: #f0f2f5;
+    --nipw-scrollbar-thumb: #cbd5e0;
   }
 
   * {
@@ -62,10 +146,11 @@
 
   body {
     @apply bg-background text-foreground;
-    background-color: #0b1220;
+    background-color: var(--nipw-bg);
     font-family: "Plus Jakarta Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   /* Scrollbar */
@@ -73,10 +158,10 @@
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #0b1220;
+    background: var(--nipw-scrollbar-track);
   }
   ::-webkit-scrollbar-thumb {
-    background: #22324a;
+    background: var(--nipw-scrollbar-thumb);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -113,4 +198,21 @@
   .crypto-ticker-scroll {
     animation: none;
   }
+}
+
+/* ── Theme-aware utility classes ─────────────────────────────── */
+.nipw-bg {
+  background-color: var(--nipw-bg);
+}
+.nipw-surface {
+  background: var(--nipw-card-bg);
+}
+.nipw-border-clr {
+  border-color: var(--nipw-border);
+}
+.nipw-text {
+  color: var(--nipw-text-primary);
+}
+.nipw-text-muted {
+  color: var(--nipw-text-muted);
 }

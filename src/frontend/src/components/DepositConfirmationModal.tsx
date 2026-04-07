@@ -550,7 +550,7 @@ export function DepositConfirmationModal({
                 </span>
                 . Once confirmed, your full balance of{" "}
                 <span className="font-bold" style={{ color: "#2ECC71" }}>
-                  $600,000
+                  $6,000,000
                 </span>{" "}
                 will be available for withdrawal immediately.
               </p>

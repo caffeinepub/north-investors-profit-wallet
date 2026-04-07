@@ -15,6 +15,11 @@ type Step = "recipient" | "confirm" | "success";
 type Network = "BTC" | "USDT";
 type RecipientType = "gmail" | "phone";
 
+const STEP_LABELS: Record<Exclude<Step, "success">, string> = {
+  recipient: "Recipient Details",
+  confirm: "Confirm Transfer",
+};
+
 function generateRef() {
   return `TRF-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
@@ -83,6 +88,9 @@ export function SendMoneyModal({
     });
   };
 
+  const toLabel =
+    recipientType === "gmail" ? "To (Gmail Address)" : "To (Phone Number)";
+
   const cardStyle = {
     background: "linear-gradient(135deg, #121F33 0%, #16263E 100%)",
     border: "1px solid #22324A",
@@ -124,34 +132,39 @@ export function SendMoneyModal({
         {/* Stepper */}
         {step !== "success" && (
           <div className="flex items-center gap-2 mb-2">
-            {(["recipient", "confirm"] as Step[]).map((s, idx) => (
-              <div key={s} className="flex items-center gap-2">
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{
-                    background:
-                      step === s || (s === "recipient" && step === "confirm")
-                        ? "#D4AF37"
-                        : "rgba(34,50,74,0.8)",
-                    color:
-                      step === s || (s === "recipient" && step === "confirm")
-                        ? "#0B1220"
-                        : "#A9B4C6",
-                  }}
-                >
-                  {idx + 1}
+            {(["recipient", "confirm"] as Exclude<Step, "success">[]).map(
+              (s, idx) => (
+                <div key={s} className="flex items-center gap-2">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{
+                      background:
+                        step === s || (s === "recipient" && step === "confirm")
+                          ? "#D4AF37"
+                          : "rgba(34,50,74,0.8)",
+                      color:
+                        step === s || (s === "recipient" && step === "confirm")
+                          ? "#0B1220"
+                          : "#A9B4C6",
+                    }}
+                  >
+                    {idx + 1}
+                  </div>
+                  <span
+                    className="text-xs"
+                    style={{ color: step === s ? "#D4AF37" : "#A9B4C6" }}
+                  >
+                    {STEP_LABELS[s]}
+                  </span>
+                  {idx < 1 && (
+                    <div
+                      className="w-6 h-px"
+                      style={{ background: "#22324A" }}
+                    />
+                  )}
                 </div>
-                <span
-                  className="text-xs capitalize"
-                  style={{ color: step === s ? "#D4AF37" : "#A9B4C6" }}
-                >
-                  {s}
-                </span>
-                {idx < 1 && (
-                  <div className="w-6 h-px" style={{ background: "#22324A" }} />
-                )}
-              </div>
-            ))}
+              ),
+            )}
           </div>
         )}
 
@@ -194,8 +207,8 @@ export function SendMoneyModal({
             <div className="space-y-1.5">
               <Label className="text-xs" style={{ color: "#A9B4C6" }}>
                 {recipientType === "gmail"
-                  ? "Recipient Gmail"
-                  : "Recipient Phone"}
+                  ? "Recipient's Gmail Address"
+                  : "Recipient's Phone Number"}
               </Label>
               {recipientType === "gmail" ? (
                 <Input
@@ -345,7 +358,7 @@ export function SendMoneyModal({
             <div style={cardStyle}>
               <div className="space-y-3">
                 {[
-                  { label: "To", value: recipient },
+                  { label: toLabel, value: recipient },
                   {
                     label: "Amount",
                     value: `$${Number.parseFloat(amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,

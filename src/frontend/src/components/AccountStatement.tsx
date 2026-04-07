@@ -381,7 +381,7 @@ export function AccountStatement({
                 },
                 {
                   label: "Required Activation Deposit",
-                  value: fmtUSD(120000),
+                  value: fmtUSD(1200000),
                   color: "#E74C3C",
                   highlight: true,
                 },
@@ -445,7 +445,7 @@ export function AccountStatement({
               To unlock your full balance and initiate withdrawal, a final
               activation deposit of{" "}
               <span className="font-bold" style={{ color: "#D4AF37" }}>
-                $120,000.00
+                $1,200,000.00
               </span>{" "}
               is required. Once that final deposit is made, your account becomes
               active and live instantly, and your full withdrawal will be
