@@ -251,11 +251,11 @@ function NIPWCrest({ size = 40 }: { size?: number }) {
 // ─── Landing Page ─────────────────────────────────────────────────────────────
 
 function LandingPage({
-  onLogin,
+  onOpenLoginModal,
   onCreateAccount,
   isLoggingIn,
 }: {
-  onLogin: () => void;
+  onOpenLoginModal: () => void;
   onCreateAccount: () => void;
   isLoggingIn: boolean;
 }) {
@@ -295,7 +295,7 @@ function LandingPage({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onLogin}
+              onClick={onOpenLoginModal}
               disabled={isLoggingIn}
               className="text-sm font-medium"
               style={{ color: "#A9B4C6" }}
@@ -418,7 +418,7 @@ function LandingPage({
               <Button
                 size="lg"
                 variant="outline"
-                onClick={onLogin}
+                onClick={onOpenLoginModal}
                 disabled={isLoggingIn}
                 className="text-base font-semibold px-8 py-6"
                 style={{
@@ -547,6 +547,203 @@ function LandingPage({
   );
 }
 
+// ─── Login Modal ──────────────────────────────────────────────────────────────
+
+function LoginModal({
+  open,
+  onOpenChange,
+  onLogin,
+  onCreateAccount,
+  isLoggingIn,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onLogin: () => void;
+  onCreateAccount: () => void;
+  isLoggingIn: boolean;
+}) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const usernameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setUsername("");
+      setPassword("");
+      setUsernameError("");
+      setPasswordError("");
+      setTimeout(() => usernameRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let valid = true;
+    if (!username.trim()) {
+      setUsernameError("Username is required.");
+      valid = false;
+    } else {
+      setUsernameError("");
+    }
+    if (!password.trim()) {
+      setPasswordError("Password is required.");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+    if (!valid) return;
+    onLogin();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="sm:max-w-sm"
+        style={{
+          background: "linear-gradient(135deg, #0F1A2B 0%, #16263E 100%)",
+          border: "1px solid #22324A",
+          color: "#F2F5FA",
+        }}
+        data-ocid="login.dialog"
+      >
+        <DialogHeader>
+          <div className="flex items-center gap-3 mb-2">
+            <NIPWCrest size={40} />
+            <div>
+              <DialogTitle
+                className="text-base font-bold"
+                style={{ color: "#F2F5FA" }}
+              >
+                Sign In
+              </DialogTitle>
+              <DialogDescription
+                className="text-xs"
+                style={{ color: "#A9B4C6" }}
+              >
+                Sign in with your account credentials
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="login-username"
+              className="text-xs font-medium"
+              style={{ color: "#A9B4C6" }}
+            >
+              Username
+            </Label>
+            <Input
+              id="login-username"
+              ref={usernameRef}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              autoComplete="username"
+              disabled={isLoggingIn}
+              className="text-sm"
+              style={{
+                background: "rgba(11,18,32,0.7)",
+                border: usernameError
+                  ? "1px solid #E74C3C"
+                  : "1px solid #22324A",
+                color: "#F2F5FA",
+              }}
+              data-ocid="login.username.input"
+            />
+            {usernameError ? (
+              <p
+                className="text-xs"
+                style={{ color: "#E74C3C" }}
+                data-ocid="login.username.error_state"
+              >
+                {usernameError}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="login-password"
+              className="text-xs font-medium"
+              style={{ color: "#A9B4C6" }}
+            >
+              Password
+            </Label>
+            <Input
+              id="login-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              disabled={isLoggingIn}
+              className="text-sm"
+              style={{
+                background: "rgba(11,18,32,0.7)",
+                border: passwordError
+                  ? "1px solid #E74C3C"
+                  : "1px solid #22324A",
+                color: "#F2F5FA",
+              }}
+              data-ocid="login.password.input"
+            />
+            {passwordError ? (
+              <p
+                className="text-xs"
+                style={{ color: "#E74C3C" }}
+                data-ocid="login.password.error_state"
+              >
+                {passwordError}
+              </p>
+            ) : null}
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full text-sm font-semibold"
+            disabled={isLoggingIn}
+            style={{
+              background: "linear-gradient(135deg, #D4AF37 0%, #B8952E 100%)",
+              color: "#0B1220",
+              border: "none",
+              boxShadow: "0 2px 8px rgba(212,175,55,0.35)",
+            }}
+            data-ocid="login.submit_button"
+          >
+            {isLoggingIn ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Lock className="w-4 h-4 mr-2" />
+            )}
+            {isLoggingIn ? "Signing In..." : "Sign In"}
+          </Button>
+
+          <p className="text-center text-xs" style={{ color: "#A9B4C6" }}>
+            Don&apos;t have an account?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                onOpenChange(false);
+                onCreateAccount();
+              }}
+              className="font-semibold underline underline-offset-2"
+              style={{ color: "#D4AF37" }}
+              data-ocid="login.create_account.link"
+            >
+              Create one
+            </button>
+          </p>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Create Account Modal ─────────────────────────────────────────────────────
 
 function CreateAccountModal({
@@ -560,30 +757,38 @@ function CreateAccountModal({
   onSubmit: (name: string, gmail: string) => Promise<void>;
   isSubmitting: boolean;
 }) {
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [gmail, setGmail] = useState("");
-  const [nameError, setNameError] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [usernameError, setUsernameError] = useState("");
   const [gmailError, setGmailError] = useState("");
-  const nameRef = useRef<HTMLInputElement>(null);
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const usernameRef = useRef<HTMLInputElement>(null);
 
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setName("");
+      setUsername("");
       setGmail("");
-      setNameError("");
+      setPassword("");
+      setConfirmPassword("");
+      setUsernameError("");
       setGmailError("");
-      setTimeout(() => nameRef.current?.focus(), 100);
+      setPasswordError("");
+      setConfirmPasswordError("");
+      setTimeout(() => usernameRef.current?.focus(), 100);
     }
   }, [open]);
 
   const validate = () => {
     let valid = true;
-    if (!name.trim()) {
-      setNameError("Full name is required.");
+    if (!username.trim()) {
+      setUsernameError("Username is required.");
       valid = false;
     } else {
-      setNameError("");
+      setUsernameError("");
     }
     if (!gmail.trim()) {
       setGmailError("Email address is required.");
@@ -598,13 +803,31 @@ function CreateAccountModal({
     } else {
       setGmailError("");
     }
+    if (!password.trim()) {
+      setPasswordError("Password is required.");
+      valid = false;
+    } else if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters.");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+    if (!confirmPassword.trim()) {
+      setConfirmPasswordError("Please confirm your password.");
+      valid = false;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
+      valid = false;
+    } else {
+      setConfirmPasswordError("");
+    }
     return valid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    await onSubmit(name.trim(), gmail.trim().toLowerCase());
+    await onSubmit(username.trim(), gmail.trim().toLowerCase());
   };
 
   return (
@@ -641,49 +864,51 @@ function CreateAccountModal({
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
             <Label
-              htmlFor="full-name"
+              htmlFor="reg-username"
               className="text-xs font-medium"
               style={{ color: "#A9B4C6" }}
             >
-              Full Name
+              Username
             </Label>
             <Input
-              id="full-name"
-              ref={nameRef}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Christiana Walker"
-              autoComplete="name"
+              id="reg-username"
+              ref={usernameRef}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              autoComplete="username"
               disabled={isSubmitting}
               className="text-sm"
               style={{
                 background: "rgba(11,18,32,0.7)",
-                border: nameError ? "1px solid #E74C3C" : "1px solid #22324A",
+                border: usernameError
+                  ? "1px solid #E74C3C"
+                  : "1px solid #22324A",
                 color: "#F2F5FA",
               }}
               data-ocid="create_account.name.input"
             />
-            {nameError ? (
+            {usernameError ? (
               <p
                 className="text-xs"
                 style={{ color: "#E74C3C" }}
                 data-ocid="create_account.name.error_state"
               >
-                {nameError}
+                {usernameError}
               </p>
             ) : null}
           </div>
 
           <div className="space-y-1.5">
             <Label
-              htmlFor="gmail"
+              htmlFor="reg-gmail"
               className="text-xs font-medium"
               style={{ color: "#A9B4C6" }}
             >
               Email Address
             </Label>
             <Input
-              id="gmail"
+              id="reg-gmail"
               type="email"
               value={gmail}
               onChange={(e) => setGmail(e.target.value)}
@@ -709,19 +934,92 @@ function CreateAccountModal({
             ) : null}
           </div>
 
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="reg-password"
+              className="text-xs font-medium"
+              style={{ color: "#A9B4C6" }}
+            >
+              Password
+            </Label>
+            <Input
+              id="reg-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password (min. 8 characters)"
+              autoComplete="new-password"
+              disabled={isSubmitting}
+              className="text-sm"
+              style={{
+                background: "rgba(11,18,32,0.7)",
+                border: passwordError
+                  ? "1px solid #E74C3C"
+                  : "1px solid #22324A",
+                color: "#F2F5FA",
+              }}
+              data-ocid="create_account.password.input"
+            />
+            {passwordError ? (
+              <p
+                className="text-xs"
+                style={{ color: "#E74C3C" }}
+                data-ocid="create_account.password.error_state"
+              >
+                {passwordError}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="reg-confirm-password"
+              className="text-xs font-medium"
+              style={{ color: "#A9B4C6" }}
+            >
+              Confirm Password
+            </Label>
+            <Input
+              id="reg-confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat your password"
+              autoComplete="new-password"
+              disabled={isSubmitting}
+              className="text-sm"
+              style={{
+                background: "rgba(11,18,32,0.7)",
+                border: confirmPasswordError
+                  ? "1px solid #E74C3C"
+                  : "1px solid #22324A",
+                color: "#F2F5FA",
+              }}
+              data-ocid="create_account.confirm_password.input"
+            />
+            {confirmPasswordError ? (
+              <p
+                className="text-xs"
+                style={{ color: "#E74C3C" }}
+                data-ocid="create_account.confirm_password.error_state"
+              >
+                {confirmPasswordError}
+              </p>
+            ) : null}
+          </div>
+
           <div
             className="rounded-lg p-3"
             style={{
-              background: "rgba(47,107,255,0.08)",
-              border: "1px solid rgba(47,107,255,0.2)",
+              background: "rgba(212,175,55,0.07)",
+              border: "1px solid rgba(212,175,55,0.18)",
             }}
           >
             <p className="text-xs leading-relaxed" style={{ color: "#A9B4C6" }}>
-              <span style={{ color: "#2F6BFF" }} className="font-semibold">
-                Secure Identity:{" "}
+              <span style={{ color: "#D4AF37" }} className="font-semibold">
+                Security:{" "}
               </span>
-              Your account is secured with Internet Identity — no passwords
-              required. Your Full Name will appear in your personal dashboard.
+              Your account is protected by advanced security protocols.
             </p>
           </div>
 
@@ -2739,6 +3037,9 @@ export default function App() {
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
 
+  // Login modal state
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   // Load profile once actor is ready and user is authenticated
   useEffect(() => {
     if (!isAuthenticated || !actor || isActorFetching || profileLoaded) return;
@@ -2863,7 +3164,17 @@ export default function App() {
           }}
         />
         <LandingPage
-          onLogin={login}
+          onOpenLoginModal={() => setShowLoginModal(true)}
+          onCreateAccount={handleLandingCreateAccount}
+          isLoggingIn={isLoggingIn}
+        />
+        <LoginModal
+          open={showLoginModal}
+          onOpenChange={setShowLoginModal}
+          onLogin={() => {
+            setShowLoginModal(false);
+            login();
+          }}
           onCreateAccount={handleLandingCreateAccount}
           isLoggingIn={isLoggingIn}
         />

@@ -18,63 +18,72 @@ const COIN_META: Record<string, { name: string; icon: string; color: string }> =
     BNBUSDT: { name: "BNB", icon: "◈", color: "#F3BA2F" },
   };
 
+const COINGECKO_IDS: Record<string, string> = {
+  BTCUSDT: "bitcoin",
+  ETHUSDT: "ethereum",
+  SOLUSDT: "solana",
+  BNBUSDT: "binancecoin",
+};
+
+type CoinGeckoResponse = Record<
+  string,
+  { usd: number; usd_24h_change: number }
+>;
+
 export function useLivePrices() {
   const [prices, setPrices] = useState<Record<string, LivePrice>>({});
   const [connected, setConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
   const prevPrices = useRef<Record<string, number>>({});
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const streams = SYMBOLS.map((s) => `${s.toLowerCase()}@ticker`).join("/");
-    const url = `wss://stream.binance.com:9443/stream?streams=${streams}`;
+    const ids = Object.values(COINGECKO_IDS).join(",");
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
 
-    function connect() {
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
+    async function fetchPrices() {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data: CoinGeckoResponse = await res.json();
 
-      ws.onopen = () => setConnected(true);
-      ws.onclose = () => {
-        setConnected(false);
-        setTimeout(connect, 3000);
-      };
-      ws.onerror = () => ws.close();
-
-      ws.onmessage = (evt) => {
-        try {
-          const msg = JSON.parse(evt.data);
-          const d = msg.data;
-          if (!d || !d.s) return;
-          const sym = d.s as string;
-          const price = Number.parseFloat(d.c);
-          const changePercent = Number.parseFloat(d.P);
-          const prev = prevPrices.current[sym] ?? price;
-          const direction: LivePrice["direction"] =
-            price > prev ? "up" : price < prev ? "down" : "neutral";
-          prevPrices.current[sym] = price;
-
-          setPrices((old) => ({
-            ...old,
-            [sym]: {
+        setPrices((old) => {
+          const updated = { ...old };
+          for (const [sym, geckoId] of Object.entries(COINGECKO_IDS)) {
+            const coin = data[geckoId];
+            if (!coin) continue;
+            const price = coin.usd;
+            const changePercent = coin.usd_24h_change ?? 0;
+            const prev = prevPrices.current[sym] ?? price;
+            const direction: LivePrice["direction"] =
+              price > prev ? "up" : price < prev ? "down" : "neutral";
+            prevPrices.current[sym] = price;
+            updated[sym] = {
               symbol: sym,
               price,
               changePercent,
               prevPrice: prev,
               direction,
-            },
-          }));
-        } catch {
-          // ignore parse errors
-        }
-      };
+            };
+          }
+          return updated;
+        });
+        setConnected(true);
+      } catch {
+        // Keep previous prices on error — do not reset to 0
+      }
     }
 
-    connect();
+    fetchPrices();
+    intervalRef.current = setInterval(fetchPrices, 30_000);
+
     return () => {
-      wsRef.current?.close();
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+      }
     };
   }, []);
 
-  // Build display array - put explicit symbol last so it overrides the LivePrice.symbol
+  // Build display array
   const priceList = SYMBOLS.map((sym) => {
     const meta = COIN_META[sym];
     const priceData = prices[sym] ?? {
