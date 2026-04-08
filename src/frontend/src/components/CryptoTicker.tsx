@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-
+// Static coin list — prices shown as-is, no local simulation interval
 interface TickerCoin {
   symbol: string;
   name: string;
@@ -8,7 +7,7 @@ interface TickerCoin {
   icon: string;
 }
 
-const INITIAL_COINS: TickerCoin[] = [
+const COINS: TickerCoin[] = [
   { symbol: "BTC", name: "Bitcoin", price: 63450, change: 2.457, icon: "₿" },
   { symbol: "ETH", name: "Ethereum", price: 3215, change: 1.832, icon: "Ξ" },
   { symbol: "SOL", name: "Solana", price: 148.7, change: 3.21, icon: "◎" },
@@ -19,17 +18,6 @@ const INITIAL_COINS: TickerCoin[] = [
   { symbol: "AVAX", name: "Avalanche", price: 34.82, change: -0.77, icon: "△" },
 ];
 
-function fluctuate(price: number): number {
-  const delta = price * (Math.random() * 0.004 - 0.002);
-  return Math.max(0.001, price + delta);
-}
-
-function fluctuateChange(change: number): number {
-  const delta = Math.random() * 0.2 - 0.1;
-  const next = change + delta;
-  return Math.max(-15, Math.min(15, next));
-}
-
 function fmtTickerPrice(price: number): string {
   if (price >= 1000)
     return `$${price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -39,23 +27,7 @@ function fmtTickerPrice(price: number): string {
 }
 
 export function CryptoTicker() {
-  const [coins, setCoins] = useState<TickerCoin[]>(INITIAL_COINS);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setCoins((prev) =>
-        prev.map((c) => ({
-          ...c,
-          price: fluctuate(c.price),
-          change: fluctuateChange(c.change),
-        })),
-      );
-    }, 5000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
+  const coins = COINS;
 
   // Duplicate coins for seamless looping
   const items = [...coins, ...coins];

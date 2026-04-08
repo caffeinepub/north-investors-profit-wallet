@@ -3698,6 +3698,8 @@ function Dashboard({
       }
     },
     enabled: !!actor && !isActorFetching,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: prices, isLoading: pricesLoading } = useQuery({
@@ -3711,6 +3713,8 @@ function Dashboard({
       }
     },
     enabled: !!actor && !isActorFetching,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: activities, isLoading: activitiesLoading } = useQuery({
@@ -3726,6 +3730,7 @@ function Dashboard({
     },
     enabled: !!actor && !isActorFetching,
     refetchInterval: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   const isLoading = isActorFetching || statsLoading;
@@ -3754,10 +3759,7 @@ function Dashboard({
   const activityList = activities ?? FALLBACK_ACTIVITIES;
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{ background: "var(--nipw-bg)" }}
-    >
+    <div className="flex flex-col" style={{ background: "var(--nipw-bg)" }}>
       <NavBar
         displayName={displayName}
         onLogout={onLogout}

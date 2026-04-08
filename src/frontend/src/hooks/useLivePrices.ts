@@ -35,14 +35,19 @@ export function useLivePrices() {
   const [connected, setConnected] = useState(false);
   const prevPrices = useRef<Record<string, number>>({});
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const ids = Object.values(COINGECKO_IDS).join(",");
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
 
     async function fetchPrices() {
+      // Cancel any in-flight request before starting a new one
+      if (abortRef.current) abortRef.current.abort();
+      abortRef.current = new AbortController();
+
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: abortRef.current.signal });
         if (!res.ok) return;
         const data: CoinGeckoResponse = await res.json();
 
@@ -68,18 +73,22 @@ export function useLivePrices() {
           return updated;
         });
         setConnected(true);
-      } catch {
-        // Keep previous prices on error — do not reset to 0
+      } catch (err) {
+        // Ignore AbortError (unmount cleanup) — keep previous prices on other errors
+        if (err instanceof Error && err.name === "AbortError") return;
       }
     }
 
-    fetchPrices();
-    intervalRef.current = setInterval(fetchPrices, 30_000);
+    // Defer first fetch by 2.5s so the dashboard renders and becomes interactive first
+    const initialDelay = setTimeout(() => {
+      fetchPrices();
+      intervalRef.current = setInterval(fetchPrices, 30_000);
+    }, 2500);
 
     return () => {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-      }
+      clearTimeout(initialDelay);
+      if (intervalRef.current !== null) clearInterval(intervalRef.current);
+      if (abortRef.current) abortRef.current.abort();
     };
   }, []);
 

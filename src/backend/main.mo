@@ -7,9 +7,9 @@ import List "mo:core/List";
 import Map "mo:core/Map";
 import Array "mo:core/Array";
 import Runtime "mo:core/Runtime";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
 
   public type PRincipal = Principal;
