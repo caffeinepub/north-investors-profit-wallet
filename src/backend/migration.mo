@@ -1,88 +1,158 @@
-// migration.mo — handles upgrade from version without accessControlState
-// Previous deployed version already has no accessControlState; this migration
-// preserves userProfileEntries and updates platformStats totalUSDBalance.
+import Map "mo:core/Map";
+import List "mo:core/List";
 import Principal "mo:core/Principal";
+import Time "mo:core/Time";
 
 module {
+  // ── Old types (copied from .old/src/backend/main.mo) ──────────────────────
 
-  // ─── Old types ───────────────────────────────────────────────────────────────
-
-  type ActivityStatus_Old = { #completed; #failed; #pending };
-  type ActivityType_Old = {
+  type OldActivityType = {
     #deposit;
+    #withdrawal;
     #interestPayment;
     #referralBonus;
-    #withdrawal;
   };
-  type Activity_Old = {
-    activityType : ActivityType_Old;
-    amount : Float;
-    description : Text;
+
+  type OldActivityStatus = {
+    #pending;
+    #completed;
+    #failed;
+  };
+
+  type OldActivity = {
     id : Nat;
-    status : ActivityStatus_Old;
-    timestamp : Int;
+    amount : Float;
+    activityType : OldActivityType;
+    timestamp : Time.Time;
+    status : OldActivityStatus;
+    description : Text;
   };
 
-  type ActivitiesBlock_Old = {
-    var blockIndex : Nat;
-    var blocks : [var [var ?Activity_Old]];
-    var elementIndex : Nat;
+  type OldUserProfile = {
+    displayName : Text;
+    gmail : Text;
   };
 
-  type UserProfile_Old = { displayName : Text; gmail : Text };
+  type OldPlatformStats = {
+    totalUSDBalance : Float;
+    totalBTC : Float;
+    registeredInvestors : Nat;
+    communityMembers : Nat;
+    featuredBitcoinAddress : Text;
+  };
 
-  // ─── Old actor stable shape ─────────────────────────────────────────────────
+  type OldMarketPrices = {
+    btcPriceUSD : Float;
+    ethPriceUSD : Float;
+    lastUpdated : Time.Time;
+  };
+
+  // ── New types (matching new main.mo) ───────────────────────────────────────
+
+  type NewActivityType = {
+    #deposit;
+    #withdrawal;
+    #interestPayment;
+    #referralBonus;
+    #login;
+    #loginFailed;
+    #accountCreation;
+    #sendMoney;
+    #receiveMoney;
+    #receiptUpload;
+    #keyVerification;
+    #settingsChange;
+  };
+
+  type NewActivityStatus = {
+    #pending;
+    #completed;
+    #failed;
+  };
+
+  type NewActivity = {
+    id : Nat;
+    amount : Float;
+    activityType : NewActivityType;
+    timestamp : Time.Time;
+    status : NewActivityStatus;
+    description : Text;
+    userGmail : Text;
+    username : Text;
+    sessionId : Text;
+    reference : Text;
+  };
+
+  type NewUserProfile = {
+    displayName : Text;
+    gmail : Text;
+    isAdmin : Bool;
+    username : Text;
+  };
+
+  // ── Migration actor shapes ─────────────────────────────────────────────────
 
   type OldActor = {
-    activities : ActivitiesBlock_Old;
-    var marketPrices : {
-      btcPriceUSD : Float;
-      ethPriceUSD : Float;
-      lastUpdated : Int;
-    };
+    var platformStats : OldPlatformStats;
+    var marketPrices : OldMarketPrices;
     var nextActivityId : Nat;
-    var platformStats : {
-      communityMembers : Nat;
-      featuredBitcoinAddress : Text;
-      registeredInvestors : Nat;
-      totalBTC : Float;
-      totalUSDBalance : Float;
-    };
-    userProfileEntries : [(Principal, UserProfile_Old)];
+    var userProfileEntries : [(Principal, OldUserProfile)];
+    userProfiles : Map.Map<Principal, OldUserProfile>;
+    activities : List.List<OldActivity>;
   };
-
-  // ─── New actor stable shape ──────────────────────────────────────────────────
-
-  type UserProfile_New = { displayName : Text; gmail : Text };
 
   type NewActor = {
-    var marketPrices : {
-      btcPriceUSD : Float;
-      ethPriceUSD : Float;
-      lastUpdated : Int;
-    };
+    var platformStats : OldPlatformStats;
+    var marketPrices : OldMarketPrices;
     var nextActivityId : Nat;
-    var platformStats : {
-      communityMembers : Nat;
-      featuredBitcoinAddress : Text;
-      registeredInvestors : Nat;
-      totalBTC : Float;
-      totalUSDBalance : Float;
-    };
-    userProfileEntries : [(Principal, UserProfile_New)];
+    var userProfileEntries : [(Principal, NewUserProfile)];
+    userProfiles : Map.Map<Principal, NewUserProfile>;
+    activities : List.List<NewActivity>;
   };
 
-  // ─── Migration function ──────────────────────────────────────────────────────
+  // ── Migration function ─────────────────────────────────────────────────────
 
   public func run(old : OldActor) : NewActor {
+    // Migrate activities: add missing fields with defaults
+    let newActivities = old.activities.map<OldActivity, NewActivity>(
+      func(a) {
+        {
+          id = a.id;
+          amount = a.amount;
+          activityType = (a.activityType : NewActivityType);
+          timestamp = a.timestamp;
+          status = (a.status : NewActivityStatus);
+          description = a.description;
+          userGmail = "";
+          username = "";
+          sessionId = "";
+          reference = "";
+        };
+      }
+    );
+
+    // Migrate userProfiles: add isAdmin = false, username = displayName
+    let newUserProfiles = old.userProfiles.map<Principal, OldUserProfile, NewUserProfile>(
+      func(_p, profile) {
+        {
+          displayName = profile.displayName;
+          gmail = profile.gmail;
+          isAdmin = false;
+          username = profile.displayName;
+        };
+      }
+    );
+
+    // userProfileEntries: derive from migrated map
+    let newUserProfileEntries = newUserProfiles.toArray();
+
     {
+      var platformStats = old.platformStats;
       var marketPrices = old.marketPrices;
       var nextActivityId = old.nextActivityId;
-      var platformStats = {
-        old.platformStats with
-        totalUSDBalance = 6_000_000.0;
-      };
-      userProfileEntries = old.userProfileEntries;
+      var userProfileEntries = newUserProfileEntries;
+      userProfiles = newUserProfiles;
+      activities = newActivities;
     };
   };
 };

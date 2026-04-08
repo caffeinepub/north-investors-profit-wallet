@@ -1,0 +1,30 @@
+{
+  "overview": "North Investors Profit Wallet (NIPW) is a professional cryptocurrency investment dashboard and broker platform with a Coinbase-style dark theme. It features a $6M BTC portfolio display, live crypto price feeds, Send/Receive money flows, a deposit receipt process, broker services, and a Site Admin panel for tracking all user activities in real time.",
+  "features": [
+    "Investor Key gate (NWAU6984C) for verified access",
+    "Login and account creation with Username, Gmail, and Password",
+    "$6,000,000 BTC balance display with withdrawal policy",
+    "Live crypto price feed (BTC, ETH, SOL, BNB) via CoinGecko",
+    "Send and Receive money flows with reference numbers",
+    "Fund Account with BTC, USDT (TRC-20/ERC-20), and card payment tabs",
+    "Deposit receipt upload with reference number and account activation",
+    "Site Admin panel with login activity log and all user action tracking",
+    "Global activity audit trail (logins, deposits, withdrawals, sends, receives)",
+    "Professional invoice-style activity display with filters and print support",
+    "Dark/light theme toggle in Settings",
+    "PWA support for mobile installability",
+    "Full SEO optimization (Open Graph, JSON-LD, sitemap)"
+  ],
+  "category": "finance",
+  "tags": [
+    "crypto",
+    "investment",
+    "broker",
+    "dashboard",
+    "bitcoin",
+    "admin",
+    "activity-tracking",
+    "pwa"
+  ],
+  "last_updated": "2026-04-08T00:34:08.574Z"
+}

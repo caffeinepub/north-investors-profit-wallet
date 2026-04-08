@@ -11,6 +11,11 @@ import { useState } from "react";
 import type { TransactionDetail } from "./TransactionDetailModal";
 import { TransactionDetailModal } from "./TransactionDetailModal";
 
+// ─── Company constants ────────────────────────────────────────────────────────
+const CO_BANK_NAME = "NORTHBANKING";
+const CO_ACCOUNT_NUMBER = "44990623844";
+const CO_BTC_ADDRESS = "bc1q88ancenmas6e0nfdl9kmvmtk5pq089ewp8wav7";
+
 function fmtUSD(n: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -106,6 +111,10 @@ export function TransactionHistoryModal({
   const [detailOpen, setDetailOpen] = useState(false);
 
   const totalPortfolio = 6000000;
+  const totalReceived = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const creditCount = transactions.filter(
+    (tx) => tx.activityType !== "withdrawal",
+  ).length;
 
   function openDetail(tx: TransactionDetail) {
     setSelectedTx(tx);
@@ -154,7 +163,8 @@ export function TransactionHistoryModal({
                   className="text-xs font-mono mt-0.5"
                   style={{ color: "#A9B4C6" }}
                 >
-                  {transactions.length} Transactions
+                  {transactions.length} Transactions · {creditCount} credits
+                  received
                 </p>
               </div>
               <button
@@ -174,39 +184,96 @@ export function TransactionHistoryModal({
 
             {/* Portfolio summary */}
             <div
-              className="mt-3 rounded-xl px-4 py-3 flex items-center justify-between"
+              className="mt-3 rounded-xl px-4 py-3"
               style={{
                 background: "rgba(212,175,55,0.07)",
                 border: "1px solid rgba(212,175,55,0.2)",
               }}
             >
-              <div>
-                <div
-                  className="text-xs font-mono uppercase tracking-widest mb-0.5"
-                  style={{ color: "#A9B4C6" }}
-                >
-                  Total Portfolio Value
+              {/* Top row: portfolio value + asset */}
+              <div className="flex items-center justify-between mb-2.5">
+                <div>
+                  <div
+                    className="text-xs font-mono uppercase tracking-widest mb-0.5"
+                    style={{ color: "#A9B4C6" }}
+                  >
+                    Total Portfolio Value
+                  </div>
+                  <div
+                    className="text-xl font-bold font-display"
+                    style={{ color: "#D4AF37" }}
+                    data-ocid="tx-history.portfolio-value.display"
+                  >
+                    {fmtUSD(totalPortfolio)}
+                  </div>
                 </div>
-                <div
-                  className="text-xl font-bold font-display"
-                  style={{ color: "#D4AF37" }}
-                  data-ocid="tx-history.portfolio-value.display"
-                >
-                  {fmtUSD(totalPortfolio)}
+                <div className="text-right">
+                  <div
+                    className="text-xs font-mono uppercase tracking-widest mb-0.5"
+                    style={{ color: "#A9B4C6" }}
+                  >
+                    Asset
+                  </div>
+                  <div
+                    className="text-sm font-bold font-mono"
+                    style={{ color: "#F0B90B" }}
+                  >
+                    Bitcoin (BTC)
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div
-                  className="text-xs font-mono uppercase tracking-widest mb-0.5"
+
+              {/* Total received */}
+              <div
+                className="flex items-center justify-between py-1.5"
+                style={{ borderTop: "1px solid rgba(212,175,55,0.15)" }}
+              >
+                <span
+                  className="text-xs font-mono uppercase tracking-wider"
                   style={{ color: "#A9B4C6" }}
                 >
-                  Asset
-                </div>
-                <div
-                  className="text-sm font-bold font-mono"
-                  style={{ color: "#F0B90B" }}
+                  Total Received
+                </span>
+                <span
+                  className="text-xs font-semibold font-mono"
+                  style={{ color: "#2ECC71" }}
                 >
-                  Bitcoin (BTC)
+                  +{fmtUSD(totalReceived)} ({creditCount} credits)
+                </span>
+              </div>
+
+              {/* Company details */}
+              <div
+                className="pt-1.5 mt-1.5 space-y-1"
+                style={{ borderTop: "1px solid rgba(212,175,55,0.15)" }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-xs font-mono uppercase tracking-wider"
+                    style={{ color: "#A9B4C6" }}
+                  >
+                    Account
+                  </span>
+                  <span
+                    className="text-xs font-bold font-mono"
+                    style={{ color: "#F2F5FA" }}
+                  >
+                    {CO_BANK_NAME} #{CO_ACCOUNT_NUMBER}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-xs font-mono uppercase tracking-wider"
+                    style={{ color: "#A9B4C6" }}
+                  >
+                    Company BTC
+                  </span>
+                  <span
+                    className="text-xs font-mono"
+                    style={{ color: "#F0B90B" }}
+                  >
+                    {CO_BTC_ADDRESS.slice(0, 10)}…{CO_BTC_ADDRESS.slice(-8)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -265,6 +332,12 @@ export function TransactionHistoryModal({
                       >
                         {typeLabel(tx.activityType)}
                       </span>
+                    </div>
+                    <div
+                      className="text-xs font-mono mt-0.5"
+                      style={{ color: "rgba(212,175,55,0.65)" }}
+                    >
+                      Ref: {tx.referenceId}
                     </div>
                   </div>
 

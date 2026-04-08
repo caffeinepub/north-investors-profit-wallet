@@ -9,8 +9,16 @@
 import { IDL } from '@icp-sdk/core/candid';
 
 export const ActivityType = IDL.Variant({
+  'loginFailed' : IDL.Null,
+  'settingsChange' : IDL.Null,
+  'receiveMoney' : IDL.Null,
+  'accountCreation' : IDL.Null,
   'deposit' : IDL.Null,
+  'login' : IDL.Null,
   'withdrawal' : IDL.Null,
+  'keyVerification' : IDL.Null,
+  'sendMoney' : IDL.Null,
+  'receiptUpload' : IDL.Null,
   'referralBonus' : IDL.Null,
   'interestPayment' : IDL.Null,
 });
@@ -24,13 +32,26 @@ export const Activity = IDL.Record({
   'id' : IDL.Nat,
   'status' : ActivityStatus,
   'activityType' : ActivityType,
+  'username' : IDL.Text,
+  'userGmail' : IDL.Text,
+  'reference' : IDL.Text,
   'description' : IDL.Text,
   'timestamp' : Time,
+  'sessionId' : IDL.Text,
   'amount' : IDL.Float64,
 });
+export const ActivityStats = IDL.Record({
+  'totalActivities' : IDL.Nat,
+  'totalLogins' : IDL.Nat,
+  'failedLogins' : IDL.Nat,
+  'totalUsers' : IDL.Nat,
+  'totalDeposits' : IDL.Nat,
+});
 export const UserProfile = IDL.Record({
+  'username' : IDL.Text,
   'displayName' : IDL.Text,
   'gmail' : IDL.Text,
+  'isAdmin' : IDL.Bool,
 });
 export const MarketPrices = IDL.Record({
   'ethPriceUSD' : IDL.Float64,
@@ -52,10 +73,18 @@ export const idlService = IDL.Service({
       [],
     ),
   'getActivityById' : IDL.Func([IDL.Nat], [IDL.Opt(Activity)], ['query']),
+  'getActivityStats' : IDL.Func([], [ActivityStats], ['query']),
   'getAllActivities' : IDL.Func([], [IDL.Vec(Activity)], ['query']),
+  'getAllUserActivities' : IDL.Func([], [IDL.Vec(Activity)], ['query']),
+  'getAllUserProfiles' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getMarketPrices' : IDL.Func([], [MarketPrices], ['query']),
   'getPlatformStats' : IDL.Func([], [PlatformStats], ['query']),
+  'getUserActivitiesByGmail' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(Activity)],
+      ['query'],
+    ),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -63,8 +92,23 @@ export const idlService = IDL.Service({
     ),
   'incrementCommunityMemberCount' : IDL.Func([], [], []),
   'incrementInvestorCount' : IDL.Func([], [], []),
+  'isAdminCaller' : IDL.Func([], [IDL.Bool], ['query']),
+  'logUserAction' : IDL.Func(
+      [
+        IDL.Text,
+        IDL.Text,
+        ActivityType,
+        IDL.Opt(IDL.Float64),
+        IDL.Text,
+        IDL.Opt(IDL.Text),
+        ActivityStatus,
+      ],
+      [IDL.Record({ 'id' : IDL.Nat, 'timestamp' : Time })],
+      [],
+    ),
   'registerUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setAdminRole' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
   'updateActivityStatus' : IDL.Func(
       [IDL.Nat, ActivityStatus],
       [IDL.Opt(Activity)],
@@ -83,8 +127,16 @@ export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
   const ActivityType = IDL.Variant({
+    'loginFailed' : IDL.Null,
+    'settingsChange' : IDL.Null,
+    'receiveMoney' : IDL.Null,
+    'accountCreation' : IDL.Null,
     'deposit' : IDL.Null,
+    'login' : IDL.Null,
     'withdrawal' : IDL.Null,
+    'keyVerification' : IDL.Null,
+    'sendMoney' : IDL.Null,
+    'receiptUpload' : IDL.Null,
     'referralBonus' : IDL.Null,
     'interestPayment' : IDL.Null,
   });
@@ -98,13 +150,26 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'status' : ActivityStatus,
     'activityType' : ActivityType,
+    'username' : IDL.Text,
+    'userGmail' : IDL.Text,
+    'reference' : IDL.Text,
     'description' : IDL.Text,
     'timestamp' : Time,
+    'sessionId' : IDL.Text,
     'amount' : IDL.Float64,
   });
+  const ActivityStats = IDL.Record({
+    'totalActivities' : IDL.Nat,
+    'totalLogins' : IDL.Nat,
+    'failedLogins' : IDL.Nat,
+    'totalUsers' : IDL.Nat,
+    'totalDeposits' : IDL.Nat,
+  });
   const UserProfile = IDL.Record({
+    'username' : IDL.Text,
     'displayName' : IDL.Text,
     'gmail' : IDL.Text,
+    'isAdmin' : IDL.Bool,
   });
   const MarketPrices = IDL.Record({
     'ethPriceUSD' : IDL.Float64,
@@ -126,10 +191,18 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getActivityById' : IDL.Func([IDL.Nat], [IDL.Opt(Activity)], ['query']),
+    'getActivityStats' : IDL.Func([], [ActivityStats], ['query']),
     'getAllActivities' : IDL.Func([], [IDL.Vec(Activity)], ['query']),
+    'getAllUserActivities' : IDL.Func([], [IDL.Vec(Activity)], ['query']),
+    'getAllUserProfiles' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getMarketPrices' : IDL.Func([], [MarketPrices], ['query']),
     'getPlatformStats' : IDL.Func([], [PlatformStats], ['query']),
+    'getUserActivitiesByGmail' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(Activity)],
+        ['query'],
+      ),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -137,8 +210,23 @@ export const idlFactory = ({ IDL }) => {
       ),
     'incrementCommunityMemberCount' : IDL.Func([], [], []),
     'incrementInvestorCount' : IDL.Func([], [], []),
+    'isAdminCaller' : IDL.Func([], [IDL.Bool], ['query']),
+    'logUserAction' : IDL.Func(
+        [
+          IDL.Text,
+          IDL.Text,
+          ActivityType,
+          IDL.Opt(IDL.Float64),
+          IDL.Text,
+          IDL.Opt(IDL.Text),
+          ActivityStatus,
+        ],
+        [IDL.Record({ 'id' : IDL.Nat, 'timestamp' : Time })],
+        [],
+      ),
     'registerUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setAdminRole' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
     'updateActivityStatus' : IDL.Func(
         [IDL.Nat, ActivityStatus],
         [IDL.Opt(Activity)],

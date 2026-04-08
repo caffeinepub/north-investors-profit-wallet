@@ -2,6 +2,8 @@ type UserProfile =
  record {
    displayName: text;
    gmail: text;
+   isAdmin: bool;
+   username: text;
  };
 type Time = int;
 type PlatformStats = 
@@ -20,9 +22,17 @@ type MarketPrices =
  };
 type ActivityType = 
  variant {
+   accountCreation;
    deposit;
    interestPayment;
+   keyVerification;
+   login;
+   loginFailed;
+   receiptUpload;
+   receiveMoney;
    referralBonus;
+   sendMoney;
+   settingsChange;
    withdrawal;
  };
 type ActivityStatus = 
@@ -31,14 +41,26 @@ type ActivityStatus =
    failed;
    pending;
  };
+type ActivityStats = 
+ record {
+   failedLogins: nat;
+   totalActivities: nat;
+   totalDeposits: nat;
+   totalLogins: nat;
+   totalUsers: nat;
+ };
 type Activity = 
  record {
    activityType: ActivityType;
    amount: float64;
    description: text;
    id: nat;
+   reference: text;
+   sessionId: text;
    status: ActivityStatus;
    timestamp: Time;
+   userGmail: text;
+   username: text;
  };
 service : {
   addActivity: (amount: float64, activityType: ActivityType, description:
@@ -47,15 +69,27 @@ service : {
                timestamp: Time;
              });
   getActivityById: (activityId: nat) -> (opt Activity) query;
+  getActivityStats: () -> (ActivityStats) query;
   getAllActivities: () -> (vec Activity) query;
+  getAllUserActivities: () -> (vec Activity) query;
+  getAllUserProfiles: () -> (vec UserProfile) query;
   getCallerUserProfile: () -> (opt UserProfile) query;
   getMarketPrices: () -> (MarketPrices) query;
   getPlatformStats: () -> (PlatformStats) query;
+  getUserActivitiesByGmail: (gmail: text) -> (vec Activity) query;
   getUserProfile: (user: principal) -> (opt UserProfile) query;
   incrementCommunityMemberCount: () -> ();
   incrementInvestorCount: () -> ();
+  isAdminCaller: () -> (bool) query;
+  logUserAction: (gmail: text, username: text, activityType: ActivityType,
+   amount: opt float64, description: text, reference: opt text, status:
+   ActivityStatus) -> (record {
+                         id: nat;
+                         timestamp: Time;
+                       });
   registerUserProfile: (displayName: text, gmail: text) -> ();
   saveCallerUserProfile: (profile: UserProfile) -> ();
+  setAdminRole: (target: principal, makeAdmin: bool) -> ();
   updateActivityStatus: (activityId: nat, newStatus: ActivityStatus) ->
    (opt Activity);
   updateBitcoinAddress: (newAddress: text) -> ();

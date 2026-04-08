@@ -5,8 +5,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Bitcoin, CheckCircle2, Copy, Download, X } from "lucide-react";
+import {
+  Bitcoin,
+  Building2,
+  CheckCircle2,
+  Copy,
+  Download,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
+
+// ─── Company constants ────────────────────────────────────────────────────────
+const CO_BANK_NAME = "NORTHBANKING";
+const CO_ACCOUNT_NUMBER = "44990623844";
+const CO_BTC_ADDRESS = "bc1q88ancenmas6e0nfdl9kmvmtk5pq089ewp8wav7";
+const TOTAL_PORTFOLIO_USD = 6000000;
+const TOTAL_TRANSACTION_COUNT = 12;
 
 export interface TransactionDetail {
   id: string;
@@ -152,6 +166,15 @@ export function TransactionDetailModal({
     }
   };
 
+  const copyBtcAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(CO_BTC_ADDRESS);
+      toast.success("BTC address copied!");
+    } catch {
+      toast.error("Failed to copy.");
+    }
+  };
+
   const handleDownload = () => {
     toast.success("Receipt generated!", {
       description: `Reference: ${transaction.referenceId}`,
@@ -268,7 +291,7 @@ export function TransactionDetailModal({
         </div>
 
         {/* Details */}
-        <div className="px-6 pb-2">
+        <div className="px-6 pb-2 overflow-y-auto max-h-[55vh]">
           <DetailRow
             label="Date & Time"
             value={fmtDateTime(transaction.timestamp)}
@@ -318,6 +341,7 @@ export function TransactionDetailModal({
             </div>
           </div>
 
+          {/* Portfolio total summary */}
           <div
             className="mt-3 px-3 py-2.5 rounded-lg"
             style={{
@@ -333,8 +357,121 @@ export function TransactionDetailModal({
               <span style={{ color: "#D4AF37", fontWeight: 600 }}>
                 $6,000,000 BTC Portfolio
               </span>{" "}
-              — North Investors Profit Wallet
+              — North Investors Profit Wallet •{" "}
+              <span style={{ color: "#F2F5FA", fontWeight: 600 }}>
+                {TOTAL_TRANSACTION_COUNT} total transactions received
+              </span>
             </p>
+            <p
+              className="text-xs text-center mt-1"
+              style={{ color: "#A9B4C6" }}
+            >
+              Total Portfolio Value:{" "}
+              <span style={{ color: "#D4AF37", fontWeight: 600 }}>
+                {fmtUSD(TOTAL_PORTFOLIO_USD)} USD
+              </span>
+            </p>
+          </div>
+
+          {/* Company Details Section */}
+          <div
+            className="mt-3 rounded-lg overflow-hidden"
+            style={{
+              border: "1px solid rgba(212,175,55,0.3)",
+            }}
+            data-ocid="transaction-detail.company.section"
+          >
+            {/* Section header */}
+            <div
+              className="flex items-center gap-2 px-4 py-2.5"
+              style={{
+                background: "rgba(212,175,55,0.1)",
+                borderBottom: "1px solid rgba(212,175,55,0.2)",
+              }}
+            >
+              <Building2
+                className="w-3.5 h-3.5 flex-shrink-0"
+                style={{ color: "#D4AF37" }}
+              />
+              <span
+                className="text-xs font-mono uppercase tracking-widest font-semibold"
+                style={{ color: "#D4AF37" }}
+              >
+                Company Details
+              </span>
+            </div>
+
+            <div
+              className="px-4 py-3 space-y-2"
+              style={{ background: "rgba(0,0,0,0.2)" }}
+            >
+              {/* Company Name */}
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-xs font-mono uppercase tracking-wider"
+                  style={{ color: "#A9B4C6" }}
+                >
+                  Company Name
+                </span>
+                <span
+                  className="text-xs font-bold font-mono"
+                  style={{ color: "#F2F5FA" }}
+                >
+                  {CO_BANK_NAME}
+                </span>
+              </div>
+
+              {/* Account Number */}
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-xs font-mono uppercase tracking-wider"
+                  style={{ color: "#A9B4C6" }}
+                >
+                  Account Number
+                </span>
+                <span
+                  className="text-xs font-bold font-mono"
+                  style={{ color: "#D4AF37" }}
+                >
+                  {CO_ACCOUNT_NUMBER}
+                </span>
+              </div>
+
+              {/* BTC Address with copy */}
+              <div
+                className="flex items-center justify-between gap-2 pt-1"
+                style={{ borderTop: "1px solid rgba(34,50,74,0.5)" }}
+              >
+                <span
+                  className="text-xs font-mono uppercase tracking-wider flex-shrink-0"
+                  style={{ color: "#A9B4C6" }}
+                >
+                  BTC Address
+                </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className="text-xs font-mono"
+                    style={{ color: "#F0B90B" }}
+                  >
+                    {CO_BTC_ADDRESS.slice(0, 10)}…{CO_BTC_ADDRESS.slice(-8)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={copyBtcAddress}
+                    className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 transition-all hover:brightness-125"
+                    style={{
+                      background: "rgba(240,185,11,0.12)",
+                      border: "1px solid rgba(240,185,11,0.3)",
+                      color: "#F0B90B",
+                    }}
+                    aria-label="Copy company BTC address"
+                    data-ocid="transaction-detail.copy-btc.button"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

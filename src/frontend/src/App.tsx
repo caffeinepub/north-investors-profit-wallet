@@ -38,6 +38,7 @@ import {
   Send,
   Settings,
   Shield,
+  ShieldCheck,
   Star,
   TrendingUp,
   Twitter,
@@ -56,7 +57,12 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { createActor } from "./backend";
+import type {
+  ActivityStatus as BackendActivityStatus,
+  ActivityType as BackendActivityType,
+} from "./backend";
 import { AccountStatement } from "./components/AccountStatement";
+import { AdminPanel } from "./components/AdminPanel";
 import { BrokerServicesSection } from "./components/BrokerServicesSection";
 import { CryptoTicker } from "./components/CryptoTicker";
 import { DepositConfirmationModal } from "./components/DepositConfirmationModal";
@@ -77,10 +83,43 @@ import { useLivePrices } from "./hooks/useLivePrices";
 // ActivityType is an alias for TransactionDetail to enable full detail support
 type ActivityType = TransactionDetail;
 
+// ─── Fire-and-forget activity logger ─────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function fireLog(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  actor: any,
+  gmail: string,
+  username: string,
+  actType: BackendActivityType,
+  amount: number | null,
+  description: string,
+  reference: string | null,
+  status: BackendActivityStatus,
+) {
+  if (!actor) return;
+  try {
+    actor
+      .logUserAction(
+        gmail,
+        username,
+        actType,
+        amount,
+        description,
+        reference,
+        status,
+      )
+      .catch(() => {});
+  } catch {
+    // fire-and-forget: never block UI
+  }
+}
 // ─── Constants & Fallbacks ───────────────────────────────────────────────────
 
 const COMPANY_NAME = "North Investors Profit Wallet";
 const COMPANY_SHORT = "NIPW";
+const COMPANY_ACCOUNT_NUMBER = "44990623844";
+const COMPANY_BANK_NAME = "NORTHBANKING";
 const FALLBACK_ADDRESS = "bc1q88ancenmas6e0nfdl9kmvmtk5pq089ewp8wav7";
 const FALLBACK_USD = 6000000;
 const FALLBACK_BTC = 9.4231;
@@ -135,7 +174,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 540,
     btcAmount: "33.8920 BTC",
     referenceId: "TXN-2024-001",
-    fromAccount: "Institutional Wire Transfer",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
   },
@@ -149,7 +188,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 470,
     btcAmount: "7.2140 BTC",
     referenceId: "TXN-2024-002",
-    fromAccount: "OTC Desk — NIPW Institutional",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef12345678",
   },
@@ -163,7 +202,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 400,
     btcAmount: "5.8210 BTC",
     referenceId: "TXN-2024-003",
-    fromAccount: "OTC Desk — NIPW Institutional",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890",
   },
@@ -177,7 +216,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 360,
     btcAmount: "0.6627 BTC",
     referenceId: "TXN-2024-004",
-    fromAccount: "NIPW Yield Distribution Engine",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "d4e5f6789012345678901234567890abcdef1234567890abcdef12345678901a",
   },
@@ -191,7 +230,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 300,
     btcAmount: "6.9400 BTC",
     referenceId: "TXN-2024-005",
-    fromAccount: "OTC Desk — NIPW Institutional",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "e5f6789012345678901234567890abcdef1234567890abcdef12345678901ab2",
   },
@@ -205,7 +244,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 265,
     btcAmount: "0.2302 BTC",
     referenceId: "TXN-2024-006",
-    fromAccount: "NIPW Referral Rewards Program",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "f6789012345678901234567890abcdef1234567890abcdef12345678901ab2c3",
   },
@@ -219,7 +258,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 220,
     btcAmount: "0.8842 BTC",
     referenceId: "TXN-2024-007",
-    fromAccount: "NIPW Yield Distribution Engine",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "789012345678901234567890abcdef1234567890abcdef12345678901ab2c3d4",
   },
@@ -233,7 +272,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 170,
     btcAmount: "7.6820 BTC",
     referenceId: "TXN-2025-001",
-    fromAccount: "OTC Desk — NIPW Institutional",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "8901234567890abcdef1234567890abcdef12345678901ab2c3d4e5f6789012",
   },
@@ -247,7 +286,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 120,
     btcAmount: "1.1931 BTC",
     referenceId: "TXN-2025-002",
-    fromAccount: "NIPW Yield Distribution Engine",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "901234567890abcdef1234567890abcdef12345678901ab2c3d4e5f678901234",
   },
@@ -261,7 +300,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 72,
     btcAmount: "5.1200 BTC",
     referenceId: "TXN-2025-003",
-    fromAccount: "OTC Desk — NIPW Institutional",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "01234567890abcdef1234567890abcdef12345678901ab2c3d4e5f6789012345",
   },
@@ -275,7 +314,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 30,
     btcAmount: "0.7682 BTC",
     referenceId: "TXN-2025-004",
-    fromAccount: "NIPW Yield Distribution Engine",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "1234567890abcdef1234567890abcdef12345678901ab2c3d4e5f67890123456",
   },
@@ -289,7 +328,7 @@ const FALLBACK_ACTIVITIES: ActivityType[] = [
     timestamp: Date.now() - 1000 * 60 * 60 * 24 * 3,
     btcAmount: "0.7820 BTC",
     referenceId: "TXN-2025-005",
-    fromAccount: "OTC Desk — NIPW Institutional",
+    fromAccount: "NORTHBANKING — Account #44990623844",
     toAccount: "Christiana — NIPW Portfolio",
     txHash: "234567890abcdef1234567890abcdef12345678901ab2c3d4e5f6789012345678",
   },
@@ -1651,6 +1690,8 @@ function NavBar({
   onSendMoney,
   onReceiveMoney,
   onOpenSettings,
+  isAdmin,
+  onOpenAdmin,
 }: {
   displayName: string;
   onLogout: () => void;
@@ -1659,6 +1700,8 @@ function NavBar({
   onSendMoney: () => void;
   onReceiveMoney: () => void;
   onOpenSettings: () => void;
+  isAdmin?: boolean;
+  onOpenAdmin?: () => void;
 }) {
   const initials = getInitials(displayName) || "?";
   return (
@@ -1716,6 +1759,18 @@ function NavBar({
             <Settings className="w-3.5 h-3.5" />
             Settings
           </button>
+          {isAdmin && onOpenAdmin && (
+            <button
+              onClick={onOpenAdmin}
+              className="text-sm font-semibold transition-colors hover:brightness-110 flex items-center gap-1"
+              style={{ color: "var(--nipw-gold)" }}
+              type="button"
+              data-ocid="nav.admin.link"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Admin
+            </button>
+          )}
         </nav>
 
         {/* User pill + logout */}
@@ -2119,6 +2174,67 @@ function AccountOverviewCard({
                 {fmtNum(FALLBACK_COMMUNITY)}
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Company / BTC Address details */}
+      <div
+        className="mt-3 rounded-lg p-3 space-y-2"
+        style={{
+          background: "rgba(212,175,55,0.05)",
+          border: "1px solid rgba(212,175,55,0.2)",
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <span
+            className="text-xs font-mono uppercase tracking-wider"
+            style={{ color: "var(--nipw-text-secondary)" }}
+          >
+            Receiving Account
+          </span>
+          <span
+            className="text-xs font-semibold font-mono"
+            style={{ color: "#D4AF37" }}
+          >
+            {COMPANY_BANK_NAME} #{COMPANY_ACCOUNT_NUMBER}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="text-xs font-mono uppercase tracking-wider flex-shrink-0"
+            style={{ color: "var(--nipw-text-secondary)" }}
+          >
+            BTC Address
+          </span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span
+              className="text-xs font-mono truncate"
+              style={{ color: "#D4AF37" }}
+            >
+              {FALLBACK_ADDRESS.slice(0, 8)}…{FALLBACK_ADDRESS.slice(-6)}
+            </span>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(FALLBACK_ADDRESS);
+                  toast.success("BTC address copied!");
+                } catch {
+                  toast.error("Failed to copy.");
+                }
+              }}
+              className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all hover:brightness-125"
+              style={{
+                background: "rgba(212,175,55,0.12)",
+                border: "1px solid rgba(212,175,55,0.3)",
+                color: "#D4AF37",
+              }}
+              aria-label="Copy BTC address"
+              data-ocid="account.copy_btc.button"
+            >
+              <Copy className="w-2.5 h-2.5" />
+            </button>
           </div>
         </div>
       </div>
@@ -2683,6 +2799,12 @@ function RecentActivityCard({
                     style={{ color: "var(--nipw-text-secondary)" }}
                   >
                     {activityLabel(act.activityType)} · {timeAgo(act.timestamp)}
+                  </div>
+                  <div
+                    className="text-xs font-mono mt-0.5"
+                    style={{ color: "rgba(212,175,55,0.7)" }}
+                  >
+                    From: NORTHBANKING
                   </div>
                 </div>
               </div>
@@ -3315,6 +3437,18 @@ function LiveAccountCard({
           >
             {accountId}
           </div>
+          <div
+            className="text-xs font-mono mt-0.5"
+            style={{ color: "rgba(212,175,55,0.65)" }}
+          >
+            Company: {COMPANY_BANK_NAME}
+          </div>
+          <div
+            className="text-xs font-mono"
+            style={{ color: "rgba(169,180,198,0.7)" }}
+          >
+            Account No: {COMPANY_ACCOUNT_NUMBER}
+          </div>
         </div>
       </div>
 
@@ -3524,10 +3658,14 @@ function Dashboard({
   displayName,
   gmail,
   onLogout,
+  isAdmin,
+  onOpenAdmin,
 }: {
   displayName: string;
   gmail: string;
   onLogout: () => void;
+  isAdmin: boolean;
+  onOpenAdmin: () => void;
 }) {
   const [showPayment, setShowPayment] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
@@ -3587,6 +3725,7 @@ function Dashboard({
       }
     },
     enabled: !!actor && !isActorFetching,
+    refetchInterval: 30_000,
   });
 
   const isLoading = isActorFetching || statsLoading;
@@ -3627,6 +3766,8 @@ function Dashboard({
         onSendMoney={() => setShowSendModal(true)}
         onReceiveMoney={() => setShowReceiveModal(true)}
         onOpenSettings={() => setShowSettings(true)}
+        isAdmin={isAdmin}
+        onOpenAdmin={onOpenAdmin}
       />
       <LiveTicker />
       <CryptoTicker />
@@ -3874,11 +4015,60 @@ function Dashboard({
           <Footer />
         </>
       )}
-      <PaymentModal open={showPayment} onOpenChange={setShowPayment} />
-      <SendMoneyModal open={showSendModal} onOpenChange={setShowSendModal} />
+      <PaymentModal
+        open={showPayment}
+        onOpenChange={(v) => {
+          setShowPayment(v);
+          if (v) {
+            fireLog(
+              actor,
+              gmail,
+              displayName,
+              "deposit" as BackendActivityType,
+              null,
+              "Fund Account modal opened",
+              null,
+              "pending" as BackendActivityStatus,
+            );
+          }
+        }}
+      />
+      <SendMoneyModal
+        open={showSendModal}
+        onOpenChange={(v) => {
+          setShowSendModal(v);
+          if (!v && showSendModal) {
+            // Log send money action on modal close (after interaction)
+            fireLog(
+              actor,
+              gmail,
+              displayName,
+              "sendMoney" as BackendActivityType,
+              null,
+              "Send Money modal interacted",
+              null,
+              "pending" as BackendActivityStatus,
+            );
+          }
+        }}
+      />
       <ReceiveMoneyModal
         open={showReceiveModal}
-        onOpenChange={setShowReceiveModal}
+        onOpenChange={(v) => {
+          setShowReceiveModal(v);
+          if (v) {
+            fireLog(
+              actor,
+              gmail,
+              displayName,
+              "receiveMoney" as BackendActivityType,
+              null,
+              "Viewed wallet address / receive money screen",
+              null,
+              "completed" as BackendActivityStatus,
+            );
+          }
+        }}
         displayName={displayName}
       />
       <DepositConfirmationModal
@@ -3889,6 +4079,16 @@ function Dashboard({
         onConfirmed={() => {
           setDepositConfirmed(true);
           setShowDepositModal(false);
+          fireLog(
+            actor,
+            gmail,
+            displayName,
+            "receiptUpload" as BackendActivityType,
+            1200000,
+            "Deposit receipt uploaded — account activation submitted",
+            null,
+            "pending" as BackendActivityStatus,
+          );
           toast.success("Account Activated!", {
             description:
               "Your deposit receipt has been submitted. Your full balance is now under review for withdrawal.",
@@ -4008,8 +4208,19 @@ export default function App() {
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminView, setAdminView] = useState(false);
 
   const isAuthenticated = !!session;
+
+  // Check admin status when actor and session are ready
+  useEffect(() => {
+    if (!actor || isActorFetching || !isAuthenticated) return;
+    actor
+      .isAdminCaller()
+      .then((result: boolean) => setIsAdmin(result))
+      .catch(() => setIsAdmin(false));
+  }, [actor, isActorFetching, isAuthenticated]);
 
   // ─── Login handler ────────────────────────────────────────────────────────
 
@@ -4035,6 +4246,16 @@ export default function App() {
             });
             setShowLoginModal(false);
             setIsLoggingIn(false);
+            fireLog(
+              actor,
+              profile.gmail ?? gmail,
+              profile.displayName,
+              "login" as BackendActivityType,
+              null,
+              `Login successful — ${profile.displayName}`,
+              null,
+              "completed" as BackendActivityStatus,
+            );
             toast.success(`Welcome back, ${profile.displayName}!`);
             return;
           }
@@ -4050,9 +4271,30 @@ export default function App() {
         setSessionState({ username: found.username, gmail: found.gmail });
         setShowLoginModal(false);
         setIsLoggingIn(false);
+        fireLog(
+          actor,
+          found.gmail,
+          found.username,
+          "login" as BackendActivityType,
+          null,
+          `Login successful — ${found.username}`,
+          null,
+          "completed" as BackendActivityStatus,
+        );
         toast.success(`Welcome back, ${found.username}!`);
       } else {
         setIsLoggingIn(false);
+        // Log failed login attempt
+        fireLog(
+          actor,
+          gmail,
+          username,
+          "loginFailed" as BackendActivityType,
+          null,
+          `Failed login attempt — ${username} / ${gmail}`,
+          null,
+          "failed" as BackendActivityStatus,
+        );
         toast.error("Invalid credentials", {
           description:
             "Username, Gmail, or password is incorrect. Please try again or create an account.",
@@ -4090,6 +4332,16 @@ export default function App() {
       setSessionState({ username: name, gmail });
       setShowCreateAccount(false);
       setIsSubmittingProfile(false);
+      fireLog(
+        actor,
+        gmail,
+        name,
+        "accountCreation" as BackendActivityType,
+        null,
+        `New account created — ${name}`,
+        null,
+        "completed" as BackendActivityStatus,
+      );
       toast.success(`Welcome to ${COMPANY_NAME}, ${name}!`, {
         description: "Your account has been created successfully.",
       });
@@ -4097,11 +4349,29 @@ export default function App() {
     [actor, isActorFetching],
   );
 
+  // ─── Key Verified handler ────────────────────────────────────────────────
+
+  const handleKeyVerified = useCallback(() => {
+    setKeyVerified(true);
+    fireLog(
+      actor,
+      "",
+      "",
+      "keyVerification" as BackendActivityType,
+      null,
+      "Investor Key verified successfully",
+      null,
+      "completed" as BackendActivityStatus,
+    );
+  }, [actor]);
+
   // ─── Logout ───────────────────────────────────────────────────────────────
 
   const handleLogout = useCallback(() => {
     clearSession();
     setSessionState(null);
+    setAdminView(false);
+    setIsAdmin(false);
   }, []);
 
   // ─── Toaster style ────────────────────────────────────────────────────────
@@ -4119,7 +4389,7 @@ export default function App() {
     return (
       <>
         <Toaster position="top-right" toastOptions={{ style: toasterStyle }} />
-        <InvestorKeyGate onVerified={() => setKeyVerified(true)} />
+        <InvestorKeyGate onVerified={handleKeyVerified} />
       </>
     );
   }
@@ -4157,6 +4427,16 @@ export default function App() {
     );
   }
 
+  // Admin view — full-screen admin panel
+  if (adminView && isAdmin) {
+    return (
+      <>
+        <Toaster position="top-right" toastOptions={{ style: toasterStyle }} />
+        <AdminPanel onExit={() => setAdminView(false)} />
+      </>
+    );
+  }
+
   // Fully authenticated with profile
   return (
     <>
@@ -4165,6 +4445,8 @@ export default function App() {
         displayName={session.username}
         gmail={session.gmail}
         onLogout={handleLogout}
+        isAdmin={isAdmin}
+        onOpenAdmin={() => setAdminView(true)}
       />
     </>
   );

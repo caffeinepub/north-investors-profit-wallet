@@ -14,15 +14,34 @@ export interface Activity {
   'id' : bigint,
   'status' : ActivityStatus,
   'activityType' : ActivityType,
+  'username' : string,
+  'userGmail' : string,
+  'reference' : string,
   'description' : string,
   'timestamp' : Time,
+  'sessionId' : string,
   'amount' : number,
+}
+export interface ActivityStats {
+  'totalActivities' : bigint,
+  'totalLogins' : bigint,
+  'failedLogins' : bigint,
+  'totalUsers' : bigint,
+  'totalDeposits' : bigint,
 }
 export type ActivityStatus = { 'pending' : null } |
   { 'completed' : null } |
   { 'failed' : null };
-export type ActivityType = { 'deposit' : null } |
+export type ActivityType = { 'loginFailed' : null } |
+  { 'settingsChange' : null } |
+  { 'receiveMoney' : null } |
+  { 'accountCreation' : null } |
+  { 'deposit' : null } |
+  { 'login' : null } |
   { 'withdrawal' : null } |
+  { 'keyVerification' : null } |
+  { 'sendMoney' : null } |
+  { 'receiptUpload' : null } |
   { 'referralBonus' : null } |
   { 'interestPayment' : null };
 export interface MarketPrices {
@@ -38,22 +57,45 @@ export interface PlatformStats {
   'featuredBitcoinAddress' : string,
 }
 export type Time = bigint;
-export interface UserProfile { 'displayName' : string, 'gmail' : string }
+export interface UserProfile {
+  'username' : string,
+  'displayName' : string,
+  'gmail' : string,
+  'isAdmin' : boolean,
+}
 export interface _SERVICE {
   'addActivity' : ActorMethod<
     [number, ActivityType, string],
     { 'id' : bigint, 'timestamp' : Time }
   >,
   'getActivityById' : ActorMethod<[bigint], [] | [Activity]>,
+  'getActivityStats' : ActorMethod<[], ActivityStats>,
   'getAllActivities' : ActorMethod<[], Array<Activity>>,
+  'getAllUserActivities' : ActorMethod<[], Array<Activity>>,
+  'getAllUserProfiles' : ActorMethod<[], Array<UserProfile>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getMarketPrices' : ActorMethod<[], MarketPrices>,
   'getPlatformStats' : ActorMethod<[], PlatformStats>,
+  'getUserActivitiesByGmail' : ActorMethod<[string], Array<Activity>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'incrementCommunityMemberCount' : ActorMethod<[], undefined>,
   'incrementInvestorCount' : ActorMethod<[], undefined>,
+  'isAdminCaller' : ActorMethod<[], boolean>,
+  'logUserAction' : ActorMethod<
+    [
+      string,
+      string,
+      ActivityType,
+      [] | [number],
+      string,
+      [] | [string],
+      ActivityStatus,
+    ],
+    { 'id' : bigint, 'timestamp' : Time }
+  >,
   'registerUserProfile' : ActorMethod<[string, string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setAdminRole' : ActorMethod<[Principal, boolean], undefined>,
   'updateActivityStatus' : ActorMethod<
     [bigint, ActivityStatus],
     [] | [Activity]

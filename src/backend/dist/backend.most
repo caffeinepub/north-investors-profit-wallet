@@ -1,15 +1,32 @@
-// Version: 1.0.0
+// Version: 3.0.0
 type ActivityStatus__152715502 = {#completed; #failed; #pending};
 type ActivityType__471236646 =
-  {#deposit; #interestPayment; #referralBonus; #withdrawal};
+  {
+    #accountCreation;
+    #deposit;
+    #interestPayment;
+    #keyVerification;
+    #login;
+    #loginFailed;
+    #receiptUpload;
+    #receiveMoney;
+    #referralBonus;
+    #sendMoney;
+    #settingsChange;
+    #withdrawal
+  };
 type Activity__391177660 =
   {
     activityType : ActivityType__471236646;
     amount : Float;
     description : Text;
     id : Nat;
+    reference : Text;
+    sessionId : Text;
     status : ActivityStatus__152715502;
-    timestamp : Time__900049286
+    timestamp : Time__900049286;
+    userGmail : Text;
+    username : Text
   };
 type Data__791452850<K, V> =
   {var count : Nat__490723111; kvs : [var ?(K, V)]};
@@ -18,14 +35,56 @@ type Int__616954475 = Int;
 type Internal__8484328<K, V> =
   {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
 type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type List__415060402<T> = List__790383201<T>;
+type List__790383201<T> =
+  {
+    var blockIndex : Nat__490723111;
+    var blocks : [var [var ?T]];
+    var elementIndex : Nat__490723111
+  };
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
 type Nat__490723111 = Nat__920180692;
 type Nat__920180692 = Nat;
 type Node__46230540<K, V> =
   {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type OldActivityStatus__102275754 = {#completed; #failed; #pending};
+type OldActivityType__776306690 =
+  {#deposit; #interestPayment; #referralBonus; #withdrawal};
+type OldActivity__72390527 =
+  {
+    activityType : OldActivityType__776306690;
+    amount : Float;
+    description : Text;
+    id : Nat;
+    status : OldActivityStatus__102275754;
+    timestamp : Time__900049286
+  };
+type OldMarketPrices__461158456 =
+  {btcPriceUSD : Float; ethPriceUSD : Float; lastUpdated : Time__900049286};
+type OldPlatformStats__397142196 =
+  {
+    communityMembers : Nat;
+    featuredBitcoinAddress : Text;
+    registeredInvestors : Nat;
+    totalBTC : Float;
+    totalUSDBalance : Float
+  };
+type OldUserProfile__416069324 = {displayName : Text; gmail : Text};
 type Time__796480547 = Int__270357528;
 type Time__900049286 = Time__796480547;
-type UserProfile__491224006 = {displayName : Text; gmail : Text};
-actor {
+type UserProfile__491224006 =
+  {displayName : Text; gmail : Text; isAdmin : Bool; username : Text};
+actor ({
+  in activities : List__415060402<OldActivity__72390527>;
+  in var marketPrices : OldMarketPrices__461158456;
+  in var nextActivityId : Nat;
+  in var platformStats : OldPlatformStats__397142196;
+  in var userProfileEntries : [(Principal, OldUserProfile__416069324)];
+  in userProfiles : Map__605269027<Principal, OldUserProfile__416069324>
+}, {
   stable activities :
     {
       var blockIndex : Nat__490723111;
@@ -49,4 +108,4 @@ actor {
       var root : Node__46230540<Principal, UserProfile__491224006>;
       var size : Nat__490723111
     }
-};
+}) ;
