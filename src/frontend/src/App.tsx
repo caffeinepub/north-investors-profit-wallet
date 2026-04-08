@@ -4160,13 +4160,16 @@ function findAccount(
   password: string,
 ): LocalAccount | null {
   const accounts = getAccounts();
+  // If Gmail is provided, match all three fields; otherwise match username + password only
+  const hasGmail = gmail.trim().length > 0;
   return (
-    accounts.find(
-      (a) =>
-        a.username.toLowerCase() === username.toLowerCase() &&
-        a.gmail.toLowerCase() === gmail.toLowerCase() &&
-        a.password === password,
-    ) ?? null
+    accounts.find((a) => {
+      const usernameMatch = a.username.toLowerCase() === username.toLowerCase();
+      const passwordMatch = a.password === password;
+      const gmailMatch =
+        !hasGmail || a.gmail.toLowerCase() === gmail.trim().toLowerCase();
+      return usernameMatch && passwordMatch && gmailMatch;
+    }) ?? null
   );
 }
 
@@ -4232,75 +4235,81 @@ export default function App() {
       // Give the UI a moment to show loading state
       await new Promise((r) => setTimeout(r, 600));
 
-      // First try backend if actor is ready
-      if (actor && !isActorFetching) {
-        try {
-          const profile = await actor.getUserByCredentials?.(
-            username,
-            gmail,
-            password,
-          );
-          if (profile?.displayName) {
-            setSession(profile.displayName, profile.gmail ?? gmail);
-            setSessionState({
-              username: profile.displayName,
-              gmail: profile.gmail ?? gmail,
-            });
-            setShowLoginModal(false);
-            setIsLoggingIn(false);
-            fireLog(
-              actor,
-              profile.gmail ?? gmail,
-              profile.displayName,
-              "login" as BackendActivityType,
-              null,
-              `Login successful — ${profile.displayName}`,
-              null,
-              "completed" as BackendActivityStatus,
+      try {
+        // First try backend if actor is ready
+        if (actor && !isActorFetching) {
+          try {
+            const raw = await actor.getUserByCredentials?.(
+              username,
+              gmail,
+              password,
             );
-            toast.success(`Welcome back, ${profile.displayName}!`);
-            return;
+            // Handle both direct object and IC optional array wrapper
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const profile: { displayName?: string; gmail?: string } | null =
+              Array.isArray(raw) ? (raw[0] ?? null) : (raw ?? null);
+            if (profile?.displayName) {
+              setSession(profile.displayName, profile.gmail ?? gmail);
+              setSessionState({
+                username: profile.displayName,
+                gmail: profile.gmail ?? gmail,
+              });
+              setShowLoginModal(false);
+              fireLog(
+                actor,
+                profile.gmail ?? gmail,
+                profile.displayName,
+                "login" as BackendActivityType,
+                null,
+                `Login successful — ${profile.displayName}`,
+                null,
+                "completed" as BackendActivityStatus,
+              );
+              toast.success(`Welcome back, ${profile.displayName}!`);
+              return;
+            }
+          } catch {
+            // Fall through to localStorage
           }
-        } catch {
-          // Fall through to localStorage
         }
-      }
 
-      // Fallback: check localStorage
-      const found = findAccount(username, gmail, password);
-      if (found) {
-        setSession(found.username, found.gmail);
-        setSessionState({ username: found.username, gmail: found.gmail });
-        setShowLoginModal(false);
+        // Fallback: check localStorage (Gmail is optional for matching)
+        const found = findAccount(username, gmail, password);
+        if (found) {
+          setSession(found.username, found.gmail);
+          setSessionState({ username: found.username, gmail: found.gmail });
+          setShowLoginModal(false);
+          fireLog(
+            actor,
+            found.gmail,
+            found.username,
+            "login" as BackendActivityType,
+            null,
+            `Login successful — ${found.username}`,
+            null,
+            "completed" as BackendActivityStatus,
+          );
+          toast.success(`Welcome back, ${found.username}!`);
+        } else {
+          // Log failed login attempt
+          fireLog(
+            actor,
+            gmail,
+            username,
+            "loginFailed" as BackendActivityType,
+            null,
+            `Failed login attempt — ${username} / ${gmail}`,
+            null,
+            "failed" as BackendActivityStatus,
+          );
+          toast.error("Invalid credentials", {
+            description:
+              "Username, Gmail, or password is incorrect. Please try again or create an account.",
+          });
+        }
+      } finally {
+        // Always reset loading state so UI is never stuck
         setIsLoggingIn(false);
-        fireLog(
-          actor,
-          found.gmail,
-          found.username,
-          "login" as BackendActivityType,
-          null,
-          `Login successful — ${found.username}`,
-          null,
-          "completed" as BackendActivityStatus,
-        );
-        toast.success(`Welcome back, ${found.username}!`);
-      } else {
-        setIsLoggingIn(false);
-        // Log failed login attempt
-        fireLog(
-          actor,
-          gmail,
-          username,
-          "loginFailed" as BackendActivityType,
-          null,
-          `Failed login attempt — ${username} / ${gmail}`,
-          null,
-          "failed" as BackendActivityStatus,
-        );
-        toast.error("Invalid credentials", {
-          description:
-            "Username, Gmail, or password is incorrect. Please try again or create an account.",
-        });
       }
     },
     [actor, isActorFetching],
